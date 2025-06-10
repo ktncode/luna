@@ -1,0 +1,37 @@
+# Japanese translations for Luna Bot
+# This Source Code Form is subject to the terms of the Mozilla Public License v2.0
+# Copyright (c) Kotone <git@ktn.works>
+
+commands:
+  ping:
+    description: "Pong!で応答します"
+    response:
+      pinging: "Ping中..."
+      result: |
+        🏓 Pong!
+        **往復レイテンシ:** {roundtrip}ms
+        **WebSocketレイテンシ:** {websocket}ms
+  
+  info:
+    description: "Luna Botの情報を表示します"
+    embed:
+      title: "🌙 Luna Bot 情報"
+      description: "Discord.js v14で動作するDiscord Bot"
+      fields:
+        version: "バージョン"
+        framework: "フレームワーク"
+        runtime: "ランタイム"
+        cpu_model: "CPUモデル"
+        architecture: "アーキテクチャ"
+        cpu_cores: "CPUコア数"
+        system_memory: "システムメモリ"
+        bot_memory: "Bot メモリ使用量"
+        license: "ライセンス"
+        servers: "サーバー数"
+        users: "ユーザー数"
+        server_language: "サーバー言語"
+      footer: "© Kotone <git@ktn.works>"
+
+errors:
+  command_error: "このコマンドの実行中にエラーが発生しました！"
+  unknown_command: "コマンド {command} が見つかりません。"

@@ -1,0 +1,37 @@
+# English translations for Luna Bot
+# This Source Code Form is subject to the terms of the Mozilla Public License v2.0
+# Copyright (c) Kotone <git@ktn.works>
+
+commands:
+  ping:
+    description: "Replies with Pong!"
+    response:
+      pinging: "Pinging..."
+      result: |
+        🏓 Pong!
+        **Roundtrip Latency:** {roundtrip}ms
+        **WebSocket Latency:** {websocket}ms
+  
+  info:
+    description: "Display information about Luna Bot"
+    embed:
+      title: "🌙 Luna Bot Information"
+      description: "A Discord bot powered by Discord.js v14"
+      fields:
+        version: "Version"
+        framework: "Framework"
+        runtime: "Runtime"
+        cpu_model: "CPU Model"
+        architecture: "Architecture"
+        cpu_cores: "CPU Cores"
+        system_memory: "System Memory"
+        bot_memory: "Bot Memory Usage"
+        license: "License"
+        servers: "Servers"
+        users: "Users"
+        server_language: "Server Language"
+      footer: "© Kotone <git@ktn.works>"
+
+errors:
+  command_error: "There was an error while executing this command!"
+  unknown_command: "No command matching {command} was found."

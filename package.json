@@ -1,0 +1,32 @@
+{
+  "name": "luna",
+  "version": "1.0.0",
+  "description": "Discord Bot Luna",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc && cp -r locales dist/",
+    "start": "node dist/index.js",
+    "dev": "tsc -w & nodemon dist/index.js",
+    "migrate": "node dist/services/migrations.js"
+  },
+  "keywords": ["discord", "bot", "luna"],
+  "author": "Kotone <git@ktn.works>",
+  "license": "MPL-2.0",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "better-sqlite3": "^9.2.2",
+    "dotenv": "^16.3.1",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.8",
+    "@types/node": "^20.10.6",
+    "@types/js-yaml": "^4.0.9",
+    "nodemon": "^3.0.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "pnpm@10.12.1"
+}
