@@ -5,14 +5,15 @@
  */
 
 import dotenv from 'dotenv';
-import { initializeDatabase } from './db.js';
+import { initializeDatabase, runMigrations } from './db.js';
 
 dotenv.config();
 
-async function runMigrations() {
+async function migrate() {
   try {
     console.log('Starting database migrations...');
     await initializeDatabase();
+    await runMigrations();
     console.log('Database migrations completed successfully.');
     process.exit(0);
   } catch (error) {
@@ -21,4 +22,4 @@ async function runMigrations() {
   }
 }
 
-runMigrations();
+migrate();

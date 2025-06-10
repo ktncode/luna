@@ -7,6 +7,7 @@
 import { Client, GatewayIntentBits } from 'discord.js';
 import dotenv from 'dotenv';
 import { loadCommands } from './services/command.js';
+import { initializeDatabase } from './services/db.js';
 
 dotenv.config();
 
@@ -30,6 +31,15 @@ const client = new Client({
 async function main() {
   try {
     console.log('Luna Bot starting...');
+    
+    // Initialize database (optional, won't fail if not available)
+    try {
+      await initializeDatabase();
+      console.log('Database initialized');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.warn('Database initialization failed, continuing without database:', errorMessage);
+    }
     
     // Load commands
     await loadCommands(client);

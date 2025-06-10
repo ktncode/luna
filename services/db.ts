@@ -18,16 +18,16 @@ export function getDatabase(): Database.Database {
 }
 
 export async function initializeDatabase(): Promise<void> {
-  db = new Database('luna.db');
+  const dbPath = process.env.DATABASE_PATH || 'luna.db';
+  db = new Database(dbPath);
   
   // Enable WAL mode for better concurrency
   db.pragma('journal_mode = WAL');
   
-  // Run migrations
-  await runMigrations();
+  console.log(`Database initialized at: ${dbPath}`);
 }
 
-async function runMigrations(): Promise<void> {
+export async function runMigrations(): Promise<void> {
   const migrationsDir = join(__dirname, 'migrations');
   
   try {
