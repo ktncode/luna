@@ -112,11 +112,11 @@
     "skipLibCheck": true                              /* Skip type checking all .d.ts files. */
   },
   "include": [
-    "**/*.ts"
+    "**/*.ts",
+    "locales/**/*"
   ],
   "exclude": [
     "node_modules",
-    "dist",
-    "locales"
+    "dist"
   ]
 }
