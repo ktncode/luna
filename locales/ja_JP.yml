@@ -96,6 +96,28 @@ commands:
       kick_failed_detail: "技術的な問題によりキックを実行できませんでした。"
       error_details: "エラー詳細"
 
+  settings:
+    description: "サーバー設定を管理します"
+    language:
+      current_title: "現在の言語設定"
+      current_language: "設定言語"
+      discord_language: "Discord言語"
+      help_text: "/settings language <言語> で変更できます"
+      success_title: "言語設定を変更しました"
+      success_description: "サーバー言語を {language} に設定しました"
+      error_title: "言語設定の変更に失敗"
+      error_description: "データベースエラーが発生しました。しばらく後にお試しください。"
+    view:
+      title: "🔧 サーバー設定"
+      description: "現在のサーバー設定一覧"
+      language_section: "言語設定"
+      current_language: "現在の言語"
+      discord_language: "Discord言語"
+      auto_detection: "自動検出"
+      other_section: "その他の設定"
+      coming_soon: "今後追加予定..."
+      footer: "設定を変更するには /settings コマンドを使用してください"
+
 errors:
   command_error: "このコマンドの実行中にエラーが発生しました！"
   unknown_command: "コマンド {command} が見つかりません。"

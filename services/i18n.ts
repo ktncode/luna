@@ -7,6 +7,7 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { load } from 'js-yaml';
+import { I18nManager } from './db.js';
 
 interface Translations {
   [key: string]: any;
@@ -32,9 +33,28 @@ function loadTranslations() {
 }
 
 // Get translation with key path and variables
-export function t(locale: string | undefined, keyPath: string, variables?: Record<string, string | number>): string {
-  const normalizedLocale = normalizeLocale(locale);
-  const translation = getNestedValue(translations.get(normalizedLocale), keyPath) || 
+export function t(guildId: string | undefined, discordLocale: string | undefined, keyPath: string, variables?: Record<string, string | number>): string {
+  // Priority: DB locale (if not null) > Discord locale > default locale
+  let locale = defaultLocale;
+  
+  if (guildId) {
+    const dbLocale = I18nManager.getGuildLocale(guildId);
+    
+    if (dbLocale !== null) {
+      // DBに明示的にlocaleが設定されている場合はそれを使用
+      locale = dbLocale;
+    } else if (discordLocale) {
+      // DB localeがnullの場合はDiscord APIから取得
+      locale = normalizeLocale(discordLocale);
+    }
+    
+    // 使用統計をログに記録
+    I18nManager.logLocaleUsage(guildId, locale);
+  } else if (discordLocale) {
+    locale = normalizeLocale(discordLocale);
+  }
+  
+  const translation = getNestedValue(translations.get(locale), keyPath) || 
                      getNestedValue(translations.get(defaultLocale), keyPath) || 
                      keyPath;
   
@@ -70,5 +90,23 @@ function getNestedValue(obj: any, path: string): any {
 
 // Initialize translations
 loadTranslations();
+
+// Helper function for commands
+export function tCmd(interaction: any, keyPath: string, variables?: Record<string, string | number>): string {
+  const guildId = interaction.guild?.id;
+  const discordLocale = interaction.guild?.preferredLocale;
+  const result = t(guildId, discordLocale, keyPath, variables);
+  
+  // コマンド使用統計をログに記録
+  if (guildId) {
+    I18nManager.logLocaleUsage(
+      guildId, 
+      I18nManager.getGuildLocale(guildId) || defaultLocale, 
+      interaction.commandName
+    );
+  }
+  
+  return result;
+}
 
 export { defaultLocale };

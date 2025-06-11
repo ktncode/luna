@@ -96,6 +96,28 @@ commands:
       kick_failed_detail: "The kick could not be executed due to a technical issue."
       error_details: "Error Details"
 
+  settings:
+    description: "Configure server settings"
+    language:
+      current_title: "Current Language Settings"
+      current_language: "Set Language"
+      discord_language: "Discord Language"
+      help_text: "Use /settings language <locale> to change"
+      success_title: "Language Settings Updated"
+      success_description: "Server language has been set to {language}"
+      error_title: "Failed to Update Language Settings"
+      error_description: "A database error occurred. Please try again later."
+    view:
+      title: "🔧 Server Settings"
+      description: "Current server configuration"
+      language_section: "Language Settings"
+      current_language: "Current Language"
+      discord_language: "Discord Language"
+      auto_detection: "Auto Detection"
+      other_section: "Other Settings"
+      coming_soon: "Coming soon..."
+      footer: "Use /settings commands to modify settings"
+
 errors:
   command_error: "There was an error while executing this command!"
   unknown_command: "No command matching {command} was found."

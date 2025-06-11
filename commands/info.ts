@@ -8,7 +8,7 @@ import { ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder } from '
 import { cpus, totalmem, freemem, arch, platform } from 'os';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { t } from '../services/i18n.js';
+import { tCmd } from '../services/i18n.js';
 
 export default {
   data: new SlashCommandBuilder()
@@ -17,6 +17,7 @@ export default {
     .setDescriptionLocalization('ja', 'Luna Botの情報を表示します'),
   
   async execute(interaction: ChatInputCommandInteraction) {
+    const guildId = interaction.guild?.id;
     const locale = interaction.guild?.preferredLocale;
     
     // Get version from package.json (read from project root, not dist)
@@ -42,23 +43,23 @@ export default {
     
     const embed = new EmbedBuilder()
       .setColor(0x5865F2)
-      .setTitle(t(locale, 'commands.info.embed.title'))
-      .setDescription(t(locale, 'commands.info.embed.description'))
+      .setTitle(tCmd(interaction, 'commands.info.embed.title'))
+      .setDescription(tCmd(interaction, 'commands.info.embed.description'))
       .addFields(
-        { name: `📊 ${t(locale, 'commands.info.embed.fields.version')}`, value: version, inline: true },
-        { name: `🔧 ${t(locale, 'commands.info.embed.fields.framework')}`, value: 'Discord.js v14', inline: true },
-        { name: `⚡ ${t(locale, 'commands.info.embed.fields.runtime')}`, value: `Node.js ${process.version}`, inline: true },
-        { name: `💻 ${t(locale, 'commands.info.embed.fields.cpu_model')}`, value: cpuInfo.model, inline: false },
-        { name: `🏗️ ${t(locale, 'commands.info.embed.fields.architecture')}`, value: `${arch()} (${platform()})`, inline: true },
-        { name: `⚙️ ${t(locale, 'commands.info.embed.fields.cpu_cores')}`, value: `${cpus().length} cores`, inline: true },
-        { name: `🧠 ${t(locale, 'commands.info.embed.fields.system_memory')}`, value: `${usedGB}GB / ${totalGB}GB (${memoryUsage}%)`, inline: true },
-        { name: `📦 ${t(locale, 'commands.info.embed.fields.bot_memory')}`, value: `${processUsedMB}MB`, inline: true },
-        { name: `📄 ${t(locale, 'commands.info.embed.fields.license')}`, value: 'Mozilla Public License v2.0', inline: true },
-        { name: `👥 ${t(locale, 'commands.info.embed.fields.servers')}`, value: `${interaction.client.guilds.cache.size}`, inline: true },
-        { name: `👤 ${t(locale, 'commands.info.embed.fields.users')}`, value: `${interaction.client.users.cache.size}`, inline: true },
-        { name: `🌍 ${t(locale, 'commands.info.embed.fields.server_language')}`, value: serverLanguage, inline: true }
+        { name: `📊 ${tCmd(interaction, 'commands.info.embed.fields.version')}`, value: version, inline: true },
+        { name: `🔧 ${tCmd(interaction, 'commands.info.embed.fields.framework')}`, value: 'Discord.js v14', inline: true },
+        { name: `⚡ ${tCmd(interaction, 'commands.info.embed.fields.runtime')}`, value: `Node.js ${process.version}`, inline: true },
+        { name: `💻 ${tCmd(interaction, 'commands.info.embed.fields.cpu_model')}`, value: cpuInfo.model, inline: false },
+        { name: `🏗️ ${tCmd(interaction, 'commands.info.embed.fields.architecture')}`, value: `${arch()} (${platform()})`, inline: true },
+        { name: `⚙️ ${tCmd(interaction, 'commands.info.embed.fields.cpu_cores')}`, value: `${cpus().length} cores`, inline: true },
+        { name: `🧠 ${tCmd(interaction, 'commands.info.embed.fields.system_memory')}`, value: `${usedGB}GB / ${totalGB}GB (${memoryUsage}%)`, inline: true },
+        { name: `📦 ${tCmd(interaction, 'commands.info.embed.fields.bot_memory')}`, value: `${processUsedMB}MB`, inline: true },
+        { name: `📄 ${tCmd(interaction, 'commands.info.embed.fields.license')}`, value: 'Mozilla Public License v2.0', inline: true },
+        { name: `👥 ${tCmd(interaction, 'commands.info.embed.fields.servers')}`, value: `${interaction.client.guilds.cache.size}`, inline: true },
+        { name: `👤 ${tCmd(interaction, 'commands.info.embed.fields.users')}`, value: `${interaction.client.users.cache.size}`, inline: true },
+        { name: `🌍 ${tCmd(interaction, 'commands.info.embed.fields.server_language')}`, value: serverLanguage, inline: true }
       )
-      .setFooter({ text: t(locale, 'commands.info.embed.footer') })
+      .setFooter({ text: tCmd(interaction, 'commands.info.embed.footer') })
       .setTimestamp();
     
     await interaction.reply({ embeds: [embed] });

@@ -73,9 +73,10 @@ export async function loadCommands(client: Client): Promise<void> {
       } catch (error) {
         console.error('Error executing command:', error);
         
+        const guildId = interaction.guild?.id;
         const locale = interaction.guild?.preferredLocale;
         const reply = {
-          content: t(locale, 'errors.command_error'),
+          content: t(guildId, locale, 'errors.command_error'),
           flags: 64, // MessageFlags.Ephemeral
         };
         

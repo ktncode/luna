@@ -5,7 +5,7 @@
  */
 
 import { ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, GuildMember } from 'discord.js';
-import { t } from '../services/i18n.js';
+import { tCmd } from '../services/i18n.js';
 
 export default {
   data: new SlashCommandBuilder()
@@ -27,12 +27,10 @@ export default {
     .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
 
   async execute(interaction: ChatInputCommandInteraction) {
-    const locale = interaction.guild?.preferredLocale;
-    
     if (!interaction.guild) {
       const errorEmbed = new EmbedBuilder()
         .setColor(0xff0000)
-        .setTitle('❌ ' + t(locale, 'errors.command_error'))
+        .setTitle('❌ ' + tCmd(interaction, 'errors.command_error'))
         .setDescription('This command can only be used in a server.')
         .setTimestamp();
       
@@ -44,24 +42,24 @@ export default {
     }
 
     const targetUser = interaction.options.getUser('user', true);
-    const reason = interaction.options.getString('reason') || t(locale, 'commands.kick.embed.reason');
+    const reason = interaction.options.getString('reason') || tCmd(interaction, 'commands.kick.embed.reason');
     const executor = interaction.member as GuildMember;
     
     // Permission checks
     if (!executor.permissions.has(PermissionFlagsBits.KickMembers)) {
       const errorEmbed = new EmbedBuilder()
         .setColor(0xff0000)
-        .setTitle('❌ ' + t(locale, 'commands.kick.errors.no_permission'))
-        .setDescription(t(locale, 'commands.kick.errors.no_permission_detail'))
+        .setTitle('❌ ' + tCmd(interaction, 'commands.kick.errors.no_permission'))
+        .setDescription(tCmd(interaction, 'commands.kick.errors.no_permission_detail'))
         .addFields(
           {
-            name: t(locale, 'commands.kick.errors.required_permission'),
+            name: tCmd(interaction, 'commands.kick.errors.required_permission'),
             value: 'KICK_MEMBERS',
             inline: true
           },
           {
-            name: t(locale, 'commands.kick.errors.your_permissions'),
-            value: executor.permissions.toArray().join(', ') || t(locale, 'commands.kick.errors.no_permissions'),
+            name: tCmd(interaction, 'commands.kick.errors.your_permissions'),
+            value: executor.permissions.toArray().join(', ') || tCmd(interaction, 'commands.kick.errors.no_permissions'),
             inline: false
           }
         )
@@ -78,8 +76,8 @@ export default {
     if (targetUser.id === interaction.user.id) {
       const errorEmbed = new EmbedBuilder()
         .setColor(0xff0000)
-        .setTitle('❌ ' + t(locale, 'commands.kick.errors.cannot_kick_self'))
-        .setDescription(t(locale, 'commands.kick.errors.cannot_kick_self_detail'))
+        .setTitle('❌ ' + tCmd(interaction, 'commands.kick.errors.cannot_kick_self'))
+        .setDescription(tCmd(interaction, 'commands.kick.errors.cannot_kick_self_detail'))
         .setTimestamp();
       
       await interaction.reply({
@@ -96,11 +94,11 @@ export default {
       if (!targetMember) {
         const errorEmbed = new EmbedBuilder()
           .setColor(0xff0000)
-          .setTitle('❌ ' + t(locale, 'commands.kick.errors.not_in_guild'))
-          .setDescription(t(locale, 'commands.kick.errors.not_in_guild_detail'))
+          .setTitle('❌ ' + tCmd(interaction, 'commands.kick.errors.not_in_guild'))
+          .setDescription(tCmd(interaction, 'commands.kick.errors.not_in_guild_detail'))
           .addFields(
             {
-              name: t(locale, 'commands.kick.errors.target_user'),
+              name: tCmd(interaction, 'commands.kick.errors.target_user'),
               value: `${targetUser.tag} (${targetUser.id})`,
               inline: true
             }
@@ -119,17 +117,17 @@ export default {
           executor.roles.highest.position <= targetMember.roles.highest.position) {
         const errorEmbed = new EmbedBuilder()
           .setColor(0xff0000)
-          .setTitle('❌ ' + t(locale, 'commands.kick.errors.higher_role'))
-          .setDescription(t(locale, 'commands.kick.errors.higher_role_detail'))
+          .setTitle('❌ ' + tCmd(interaction, 'commands.kick.errors.higher_role'))
+          .setDescription(tCmd(interaction, 'commands.kick.errors.higher_role_detail'))
           .addFields(
             {
-              name: t(locale, 'commands.kick.errors.your_highest_role'),
-              value: `${executor.roles.highest.name} (${t(locale, 'commands.kick.errors.position')}: ${executor.roles.highest.position})`,
+              name: tCmd(interaction, 'commands.kick.errors.your_highest_role'),
+              value: `${executor.roles.highest.name} (${tCmd(interaction, 'commands.kick.errors.position')}: ${executor.roles.highest.position})`,
               inline: true
             },
             {
-              name: t(locale, 'commands.kick.errors.target_highest_role'),
-              value: `${targetMember.roles.highest.name} (${t(locale, 'commands.kick.errors.position')}: ${targetMember.roles.highest.position})`,
+              name: tCmd(interaction, 'commands.kick.errors.target_highest_role'),
+              value: `${targetMember.roles.highest.name} (${tCmd(interaction, 'commands.kick.errors.position')}: ${targetMember.roles.highest.position})`,
               inline: true
             }
           )
@@ -148,21 +146,21 @@ export default {
       // Create success embed
       const embed = new EmbedBuilder()
         .setColor(0x00ff00)
-        .setTitle(t(locale, 'commands.kick.embed.title'))
-        .setDescription(t(locale, 'commands.kick.embed.success', { user: targetUser.tag }))
+        .setTitle(tCmd(interaction, 'commands.kick.embed.title'))
+        .setDescription(tCmd(interaction, 'commands.kick.embed.success', { user: targetUser.tag }))
         .addFields(
           {
-            name: t(locale, 'commands.kick.embed.kicked_user'),
+            name: tCmd(interaction, 'commands.kick.embed.kicked_user'),
             value: `${targetUser.tag} (${targetUser.id})`,
             inline: true
           },
           {
-            name: t(locale, 'commands.kick.embed.kicked_by'),
+            name: tCmd(interaction, 'commands.kick.embed.kicked_by'),
             value: `${interaction.user.tag}`,
             inline: true
           },
           {
-            name: t(locale, 'commands.kick.embed.reason'),
+            name: tCmd(interaction, 'commands.kick.embed.reason'),
             value: reason,
             inline: false
           }
@@ -178,11 +176,11 @@ export default {
       
       const errorEmbed = new EmbedBuilder()
         .setColor(0xff0000)
-        .setTitle('❌ ' + t(locale, 'commands.kick.errors.kick_failed'))
-        .setDescription(t(locale, 'commands.kick.errors.kick_failed_detail'))
+        .setTitle('❌ ' + tCmd(interaction, 'commands.kick.errors.kick_failed'))
+        .setDescription(tCmd(interaction, 'commands.kick.errors.kick_failed_detail'))
         .addFields(
           {
-            name: t(locale, 'commands.kick.errors.error_details'),
+            name: tCmd(interaction, 'commands.kick.errors.error_details'),
             value: error instanceof Error ? error.message : String(error),
             inline: false
           }

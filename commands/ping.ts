@@ -5,7 +5,7 @@
  */
 
 import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
-import { t } from '../services/i18n.js';
+import { tCmd } from '../services/i18n.js';
 
 export default {
   data: new SlashCommandBuilder()
@@ -14,10 +14,8 @@ export default {
     .setDescriptionLocalization('ja', 'Pong!で応答します'),
   
   async execute(interaction: ChatInputCommandInteraction) {
-    const locale = interaction.guild?.preferredLocale;
-    
     const sent = await interaction.reply({ 
-      content: t(locale, 'commands.ping.response.pinging'), 
+      content: tCmd(interaction, 'commands.ping.response.pinging'), 
       fetchReply: true 
     });
     
@@ -25,7 +23,7 @@ export default {
     const wsLatency = interaction.client.ws.ping;
     
     await interaction.editReply(
-      t(locale, 'commands.ping.response.result', {
+      tCmd(interaction, 'commands.ping.response.result', {
         roundtrip: roundtripLatency.toString(),
         websocket: wsLatency.toString()
       })
