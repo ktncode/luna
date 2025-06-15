@@ -117,6 +117,20 @@ commands:
       other_section: "その他の設定"
       coming_soon: "今後追加予定..."
       footer: "設定を変更するには /settings コマンドを使用してください"
+    webhook:
+      create:
+        missing_params: WebHook名とチャンネルIDの両方が必要です。
+        invalid_channel: 有効なチャンネルIDを入力してください。
+        success: "WebHook「{{name}}」を作成しました。\nURL: {{url}}\nチャンネル: {{channel}}"
+        failed: WebHookの作成に失敗しました。（上限は5つまでです）
+      list:
+        empty: 設定されているWebHookはありません。
+        title: "**設定されているWebHook一覧**"
+        item: "ID: {{id}} | 名前: {{name}}\nURL: {{url}}\nチャンネル: {{channel}}\n作成日: {{created}}"
+      delete:
+        missing_id: 削除するWebHookのIDを指定してください。
+        success: WebHookを削除しました。
+        failed: WebHookの削除に失敗しました。
 
 errors:
   command_error: "このコマンドの実行中にエラーが発生しました！"

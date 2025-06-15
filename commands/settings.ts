@@ -4,9 +4,10 @@
  * Copyright (c) Kotone <git@ktn.works>
  */
 
-import { ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
+import { ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, SlashCommandSubcommandBuilder } from 'discord.js';
 import { tCmd } from '../services/i18n.js';
-import { I18nManager } from '../services/db.js';
+import { createWebhook, getGuildWebhooks, deleteWebhook, I18nManager } from '../services/db.js';
+import { randomBytes } from 'crypto';
 
 export default {
   data: new SlashCommandBuilder()
@@ -36,6 +37,42 @@ export default {
         .setDescription('View current server settings')
         .setDescriptionLocalization('ja', '現在のサーバー設定を表示します')
     )
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('webhook')
+        .setDescription('Manage webhook settings')
+        .addStringOption(option =>
+          option.setName('action')
+            .setDescription('Action to perform')
+            .setRequired(true)
+            .addChoices(
+              { name: 'create', value: 'create' },
+              { name: 'list', value: 'list' },
+              { name: 'delete', value: 'delete' }
+            )
+        )
+        .addStringOption(option =>
+          option.setName('name')
+            .setDescription('Webhook name')
+            .setRequired(false)
+        )
+        .addStringOption(option =>
+          option.setName('discord_webhook_url')
+            .setDescription('Discord webhook URL')
+            .setRequired(false)
+        )
+        .addIntegerOption(option =>
+          option.setName('webhook_id')
+            .setDescription('Webhook ID to delete')
+            .setRequired(false)
+        )
+        .addStringOption(option =>
+          option.setName('channel_id')
+            .setDescription('Discord channel ID where messages will be sent')
+            .setDescriptionLocalization('ja', 'メッセージを送信するDiscordチャンネルID')
+            .setRequired(false)
+        )
+    )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
   async execute(interaction: ChatInputCommandInteraction) {
@@ -59,6 +96,120 @@ export default {
       await handleLanguageSettings(interaction);
     } else if (subcommand === 'view') {
       await handleViewSettings(interaction);
+    } else if (subcommand === 'webhook') {
+      const action = interaction.options.getString('action', true);
+      const guildId = interaction.guildId!;
+
+      switch (action) {
+        case 'create': {
+          const name = interaction.options.getString('name');
+          const channelId = interaction.options.getString('channel_id');
+
+          if (!name || !channelId) {
+            await interaction.reply({
+              content: tCmd(interaction, 'commands.settings.webhook.create.missing_params'),
+              ephemeral: true
+            });
+            return;
+          }
+
+          // チャンネルIDの検証
+          if (!/^\d{17,19}$/.test(channelId)) {
+            await interaction.reply({
+              content: tCmd(interaction, 'commands.settings.webhook.create.invalid_channel'),
+              ephemeral: true
+            });
+            return;
+          }
+
+          // 重複しないWebHookパスを生成（最大10回試行）
+          let webhookPath: string;
+          let success = false;
+          let attempts = 0;
+          
+          do {
+            webhookPath = randomBytes(6).toString('hex'); // 12桁のhex文字列
+            success = await createWebhook(guildId, webhookPath, channelId, name);
+            attempts++;
+          } while (!success && attempts < 10);
+
+          if (success) {
+            const webhookUrl = `https://luna.ktn.cat/webhook/${webhookPath}`;
+            const channelMention = `<#${channelId}>`;
+            await interaction.reply({
+              content: tCmd(interaction, 'commands.settings.webhook.create.success', { 
+                name, 
+                url: webhookUrl,
+                channel: channelMention
+              }),
+              ephemeral: true
+            });
+          } else {
+            await interaction.reply({
+              content: tCmd(interaction, 'commands.settings.webhook.create.failed'),
+              ephemeral: true
+            });
+          }
+          break;
+        }
+
+        case 'list': {
+          const webhooks = await getGuildWebhooks(guildId);
+          
+          if (webhooks.length === 0) {
+            await interaction.reply({
+              content: tCmd(interaction, 'commands.settings.webhook.list.empty'),
+              ephemeral: true
+            });
+            return;
+          }
+
+          const webhookList = webhooks
+            .filter(w => w.enabled)
+            .map(w => tCmd(interaction, 'commands.settings.webhook.list.item', {
+              id: w.id,
+              name: w.name,
+              url: `https://luna.ktn.cat/webhook/${w.webhook_path}`,
+              channel: `<#${w.channel_id}>`,
+              created: new Date(w.created_at).toLocaleDateString()
+            }))
+            .join('\n');
+
+          await interaction.reply({
+            content: tCmd(interaction, 'commands.settings.webhook.list.title') + '\n' + webhookList,
+            ephemeral: true
+          });
+          break;
+        }
+
+        case 'delete': {
+          const webhookId = interaction.options.getInteger('webhook_id');
+          
+          if (!webhookId) {
+            await interaction.reply({
+              content: tCmd(interaction, 'commands.settings.webhook.delete.missing_id'),
+              ephemeral: true
+            });
+            return;
+          }
+
+          const success = await deleteWebhook(guildId, webhookId);
+          
+          if (success) {
+            await interaction.reply({
+              content: tCmd(interaction, 'commands.settings.webhook.delete.success'),
+              ephemeral: true
+            });
+          } else {
+            await interaction.reply({
+              content: tCmd(interaction, 'commands.settings.webhook.delete.failed'),
+              ephemeral: true
+            });
+          }
+          break;
+        }
+      }
+      return;
     }
   },
 };
