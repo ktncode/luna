@@ -542,11 +542,12 @@ export async function deleteWebhook(guildId: string, webhookId: number, userId: 
         const dbm = DBManager.getInstance();
         
         // WebHookの存在と作成者をチェック
-        const webhook = dbm.findOne<WebhookConfig>('guild_webhooks', { 
-            id: webhookId, 
-            guild_id: guildId,
-            enabled: true
-        });
+        const result = dbm.query(
+            'SELECT * FROM guild_webhooks WHERE id = ? AND guild_id = ? AND enabled = 1 LIMIT 1',
+            [webhookId, guildId]
+        );
+        
+        const webhook = result[0] as WebhookConfig;
         
         if (!webhook) {
             console.log(`Webhook not found: ${webhookId}`);
@@ -594,13 +595,12 @@ export async function createCrossServerWebhook(
         }
         
         // 既存のクロスサーバー設定をチェック
-        const existing = dbm.findOne('cross_server_webhooks', {
-            source_guild_id: sourceGuildId,
-            target_guild_id: targetGuildId,
-            webhook_path: webhookPath
-        });
+        const existingResult = dbm.query(
+            'SELECT * FROM cross_server_webhooks WHERE source_guild_id = ? AND target_guild_id = ? AND webhook_path = ? LIMIT 1',
+            [sourceGuildId, targetGuildId, webhookPath]
+        );
         
-        if (existing) {
+        if (existingResult.length > 0) {
             console.log(`Cross-server webhook already exists`);
             return false;
         }
