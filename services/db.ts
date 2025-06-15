@@ -478,6 +478,15 @@ export async function createWebhook(guildId: string, webhookPath: string, channe
     try {
         const dbm = DBManager.getInstance();
         
+        // guild_i18nレコードが存在しない場合は作成
+        const existingGuild = dbm.findOne('guild_i18n', { guild_id: guildId });
+        if (!existingGuild) {
+            dbm.insert('guild_i18n', {
+                guild_id: guildId,
+                locale: null
+            });
+        }
+        
         // WebHookパスの重複チェック（全体で一意である必要がある）
         const existingPath = dbm.findOne('guild_webhooks', { 
             webhook_path: webhookPath 

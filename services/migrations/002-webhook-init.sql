@@ -10,8 +10,7 @@ CREATE TABLE IF NOT EXISTS guild_webhooks (
     name TEXT NOT NULL,
     enabled BOOLEAN DEFAULT TRUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (guild_id) REFERENCES guild_i18n(guild_id)
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- WebHook使用統計テーブル

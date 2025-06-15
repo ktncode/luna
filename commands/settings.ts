@@ -56,14 +56,10 @@ export default {
             .setDescription('Webhook name')
             .setRequired(false)
         )
-        .addStringOption(option =>
-          option.setName('discord_webhook_url')
-            .setDescription('Discord webhook URL')
-            .setRequired(false)
-        )
         .addIntegerOption(option =>
           option.setName('webhook_id')
             .setDescription('Webhook ID to delete')
+            .setDescriptionLocalization('ja', '削除するWebHookのID')
             .setRequired(false)
         )
         .addStringOption(option =>
