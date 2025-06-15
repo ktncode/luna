@@ -79,7 +79,7 @@ export default {
         )
 
     )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.guild) {
@@ -212,10 +212,10 @@ export default {
 
           // 権限チェック
           const member = interaction.member;
-          const hasManageGuildPermission = !!(member && typeof member.permissions !== 'string' && 
-            member.permissions.has(PermissionFlagsBits.ManageGuild));
+          const hasAdministratorPermission = !!(member && typeof member.permissions !== 'string' && 
+            member.permissions.has(PermissionFlagsBits.Administrator));
 
-          const success = await deleteWebhook(guildId, targetWebhook.id, interaction.user.id, hasManageGuildPermission);
+          const success = await deleteWebhook(guildId, targetWebhook.id, interaction.user.id, hasAdministratorPermission);
           
           if (success) {
             await interaction.reply({
@@ -333,8 +333,8 @@ export default {
 
           // 権限チェック
           const member = interaction.member;
-          const hasManageGuildPermission = !!(member && typeof member.permissions !== 'string' && 
-            member.permissions.has(PermissionFlagsBits.ManageGuild));
+          const hasAdministratorPermission = !!(member && typeof member.permissions !== 'string' && 
+            member.permissions.has(PermissionFlagsBits.Administrator));
 
           // デバッグログ
           console.log('Cross-server webhook delete attempt:', {
@@ -342,12 +342,12 @@ export default {
             guildId: guildId,
             webhookId: targetCrossWebhook.id,
             createdBy: targetCrossWebhook.created_by,
-            hasManageGuildPermission: hasManageGuildPermission,
+            hasAdministratorPermission: hasAdministratorPermission,
             member: !!member,
             memberPermissions: member ? typeof member.permissions : 'no member'
           });
 
-          const success = await deleteCrossServerWebhook(guildId, targetCrossWebhook.id, interaction.user.id, hasManageGuildPermission);
+          const success = await deleteCrossServerWebhook(guildId, targetCrossWebhook.id, interaction.user.id, hasAdministratorPermission);
           
           if (success) {
             await interaction.reply({

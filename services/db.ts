@@ -542,7 +542,7 @@ export async function createWebhook(guildId: string, webhookPath: string, channe
 }
 
 // WebHook設定の削除（権限チェック付き）
-export async function deleteWebhook(guildId: string, webhookId: number, userId: string, hasManageGuildPermission: boolean): Promise<boolean> {
+export async function deleteWebhook(guildId: string, webhookId: number, userId: string, hasAdministratorPermission: boolean): Promise<boolean> {
     try {
         const dbm = DBManager.getInstance();
         
@@ -563,18 +563,18 @@ export async function deleteWebhook(guildId: string, webhookId: number, userId: 
             webhookId: webhookId,
             userId: userId,
             createdBy: webhook.created_by,
-            hasManageGuildPermission: hasManageGuildPermission
+            hasAdministratorPermission: hasAdministratorPermission
         });
         
         // 権限チェック：作成者または管理者権限を持つユーザーのみ削除可能
         // created_byがnullやundefinedの場合は管理者権限が必要
         if (!webhook.created_by) {
             // 作成者情報がない場合は管理者権限が必要
-            if (!hasManageGuildPermission) {
-                console.log(`No creator info, admin permission required: user ${userId}`);
+            if (!hasAdministratorPermission) {
+                console.log(`No creator info, administrator permission required: user ${userId}`);
                 return false;
             }
-        } else if (webhook.created_by !== userId && !hasManageGuildPermission) {
+        } else if (webhook.created_by !== userId && !hasAdministratorPermission) {
             console.log(`Insufficient permissions to delete webhook: user ${userId}, creator ${webhook.created_by}`);
             return false;
         }
@@ -640,7 +640,7 @@ export async function createCrossServerWebhook(
 }
 
 // クロスサーバーWebHook削除（権限チェック付き）
-export async function deleteCrossServerWebhook(guildId: string, crossWebhookId: number, userId: string, hasManageGuildPermission: boolean): Promise<boolean> {
+export async function deleteCrossServerWebhook(guildId: string, crossWebhookId: number, userId: string, hasAdministratorPermission: boolean): Promise<boolean> {
     try {
         const dbm = DBManager.getInstance();
         
@@ -662,7 +662,7 @@ export async function deleteCrossServerWebhook(guildId: string, crossWebhookId: 
             webhookId: crossWebhookId,
             userId: userId,
             createdBy: crossWebhook.created_by,
-            hasManageGuildPermission: hasManageGuildPermission,
+            hasAdministratorPermission: hasAdministratorPermission,
             guildId: guildId,
             sourceGuildId: crossWebhook.source_guild_id,
             targetGuildId: crossWebhook.target_guild_id
@@ -678,12 +678,12 @@ export async function deleteCrossServerWebhook(guildId: string, crossWebhookId: 
         // created_byがnullやundefinedの場合は管理者権限が必要
         if (!crossWebhook.created_by) {
             // 作成者情報がない場合は管理者権限が必要
-            if (!hasManageGuildPermission) {
-                console.log(`No creator info for cross-server webhook, admin permission required: user ${userId}`);
+            if (!hasAdministratorPermission) {
+                console.log(`No creator info for cross-server webhook, administrator permission required: user ${userId}`);
                 return false;
             }
-        } else if (crossWebhook.created_by !== userId && !hasManageGuildPermission) {
-            console.log(`Insufficient permissions to delete cross-server webhook: user ${userId}, creator ${crossWebhook.created_by}, hasManageGuild: ${hasManageGuildPermission}`);
+        } else if (crossWebhook.created_by !== userId && !hasAdministratorPermission) {
+            console.log(`Insufficient permissions to delete cross-server webhook: user ${userId}, creator ${crossWebhook.created_by}, hasAdministrator: ${hasAdministratorPermission}`);
             return false;
         }
         
