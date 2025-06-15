@@ -566,15 +566,8 @@ export async function deleteWebhook(guildId: string, webhookId: number, userId: 
             hasAdministratorPermission: hasAdministratorPermission
         });
         
-        // 権限チェック：作成者または管理者権限を持つユーザーのみ削除可能
-        // created_byがnullやundefinedの場合は管理者権限が必要
-        if (!webhook.created_by) {
-            // 作成者情報がない場合は管理者権限が必要
-            if (!hasAdministratorPermission) {
-                console.log(`No creator info, administrator permission required: user ${userId}`);
-                return false;
-            }
-        } else if (webhook.created_by !== userId && !hasAdministratorPermission) {
+        // 権限チェック：作成者またはAdministrator権限を持つユーザーのみ削除可能
+        if (webhook.created_by !== userId && !hasAdministratorPermission) {
             console.log(`Insufficient permissions to delete webhook: user ${userId}, creator ${webhook.created_by}`);
             return false;
         }
@@ -674,15 +667,8 @@ export async function deleteCrossServerWebhook(guildId: string, crossWebhookId: 
             return false;
         }
         
-        // 権限チェック：作成者または管理者権限を持つユーザーのみ削除可能
-        // created_byがnullやundefinedの場合は管理者権限が必要
-        if (!crossWebhook.created_by) {
-            // 作成者情報がない場合は管理者権限が必要
-            if (!hasAdministratorPermission) {
-                console.log(`No creator info for cross-server webhook, administrator permission required: user ${userId}`);
-                return false;
-            }
-        } else if (crossWebhook.created_by !== userId && !hasAdministratorPermission) {
+        // 権限チェック：作成者またはAdministrator権限を持つユーザーのみ削除可能
+        if (crossWebhook.created_by !== userId && !hasAdministratorPermission) {
             console.log(`Insufficient permissions to delete cross-server webhook: user ${userId}, creator ${crossWebhook.created_by}, hasAdministrator: ${hasAdministratorPermission}`);
             return false;
         }
