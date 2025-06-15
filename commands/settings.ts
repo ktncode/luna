@@ -128,7 +128,7 @@ export default {
             const channelMention = `<#${channelId}>`;
             await interaction.reply({
               content: tCmd(interaction, 'commands.settings.webhook.create.success', { 
-                name, 
+                name: name, 
                 url: webhookUrl,
                 channel: channelMention
               }),
@@ -157,7 +157,6 @@ export default {
           const webhookList = webhooks
             .filter(w => w.enabled)
             .map(w => tCmd(interaction, 'commands.settings.webhook.list.item', {
-              id: w.id,
               name: w.name,
               url: `https://luna.ktn.cat/webhook/${w.webhook_path}`,
               channel: `<#${w.channel_id}>`,
@@ -199,7 +198,9 @@ export default {
           
           if (success) {
             await interaction.reply({
-              content: tCmd(interaction, 'commands.settings.webhook.delete.success', { name: targetWebhook.name }),
+              content: tCmd(interaction, 'commands.settings.webhook.delete.success', { 
+                name: targetWebhook.name 
+              }),
               flags: 64
             });
           } else {

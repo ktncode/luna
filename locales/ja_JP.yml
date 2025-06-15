@@ -121,16 +121,16 @@ commands:
       create:
         missing_params: WebHook名とチャンネルIDの両方が必要です。
         invalid_channel: 有効なチャンネルIDを入力してください。
-        success: "WebHook「{{name}}」を作成しました。\nURL: {{url}}\nチャンネル: {{channel}}"
+        success: "WebHook「{name}」を作成しました。\nURL: {url}\nチャンネル: {channel}"
         failed: WebHookの作成に失敗しました。（上限は5つまでです）
       list:
         empty: 設定されているWebHookはありません。
         title: "**設定されているWebHook一覧**"
-        item: "名前: {{name}}\nURL: {{url}}\nチャンネル: {{channel}}\n作成日: {{created}}"
+        item: "名前: {name}\nURL: {url}\nチャンネル: {channel}\n作成日: {created}"
       delete:
         missing_name: 削除するWebHookの名前を指定してください。
         not_found: 指定されたWebHookが見つかりません。
-        success: "WebHook「{{name}}」を削除しました。"
+        success: "WebHook「{name}」を削除しました。"
         failed: WebHookの削除に失敗しました。
 
 errors:
