@@ -119,18 +119,19 @@ commands:
       footer: "Use /settings commands to modify settings"
     webhook:
       create:
-        missing_params: "Both webhook name and channel ID are required."
-        invalid_channel: "Please provide a valid channel ID."
+        missing_params: Both webhook name and channel ID are required.
+        invalid_channel: Please provide a valid channel ID.
         success: "Created webhook \"{{name}}\".\nURL: {{url}}\nChannel: {{channel}}"
-        failed: "Failed to create webhook. (Maximum 5 webhooks per server)"
+        failed: Failed to create webhook. (Maximum 5 webhooks per server)
       list:
-        empty: "No webhooks configured."
+        empty: No webhooks configured.
         title: "**Configured Webhooks**"
-        item: "ID: {{id}} | Name: {{name}}\nURL: {{url}}\nChannel: {{channel}}\nCreated: {{created}}"
+        item: "Name: {{name}}\nURL: {{url}}\nChannel: {{channel}}\nCreated: {{created}}"
       delete:
-        missing_id: "Please specify the webhook ID to delete."
-        success: "Webhook deleted successfully."
-        failed: "Failed to delete webhook."
+        missing_name: Please specify the webhook name to delete.
+        not_found: The specified webhook was not found.
+        success: "Webhook \"{{name}}\" deleted successfully."
+        failed: Failed to delete webhook.
 
 errors:
   command_error: "There was an error while executing this command!"

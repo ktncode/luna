@@ -56,12 +56,6 @@ export default {
             .setDescription('Webhook name')
             .setRequired(false)
         )
-        .addIntegerOption(option =>
-          option.setName('webhook_id')
-            .setDescription('Webhook ID to delete')
-            .setDescriptionLocalization('ja', '削除するWebHookのID')
-            .setRequired(false)
-        )
         .addStringOption(option =>
           option.setName('channel_id')
             .setDescription('Discord channel ID where messages will be sent')
@@ -179,21 +173,33 @@ export default {
         }
 
         case 'delete': {
-          const webhookId = interaction.options.getInteger('webhook_id');
+          const webhookName = interaction.options.getString('name');
           
-          if (!webhookId) {
+          if (!webhookName) {
             await interaction.reply({
-              content: tCmd(interaction, 'commands.settings.webhook.delete.missing_id'),
+              content: tCmd(interaction, 'commands.settings.webhook.delete.missing_name'),
               flags: 64
             });
             return;
           }
 
-          const success = await deleteWebhook(guildId, webhookId);
+          // 名前で検索
+          const webhooks = await getGuildWebhooks(guildId);
+          const targetWebhook = webhooks.find(w => w.name === webhookName && w.enabled);
+          
+          if (!targetWebhook) {
+            await interaction.reply({
+              content: tCmd(interaction, 'commands.settings.webhook.delete.not_found'),
+              flags: 64
+            });
+            return;
+          }
+
+          const success = await deleteWebhook(guildId, targetWebhook.id);
           
           if (success) {
             await interaction.reply({
-              content: tCmd(interaction, 'commands.settings.webhook.delete.success'),
+              content: tCmd(interaction, 'commands.settings.webhook.delete.success', { name: targetWebhook.name }),
               flags: 64
             });
           } else {

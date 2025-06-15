@@ -126,10 +126,11 @@ commands:
       list:
         empty: 設定されているWebHookはありません。
         title: "**設定されているWebHook一覧**"
-        item: "ID: {{id}} | 名前: {{name}}\nURL: {{url}}\nチャンネル: {{channel}}\n作成日: {{created}}"
+        item: "名前: {{name}}\nURL: {{url}}\nチャンネル: {{channel}}\n作成日: {{created}}"
       delete:
-        missing_id: 削除するWebHookのIDを指定してください。
-        success: WebHookを削除しました。
+        missing_name: 削除するWebHookの名前を指定してください。
+        not_found: 指定されたWebHookが見つかりません。
+        success: "WebHook「{{name}}」を削除しました。"
         failed: WebHookの削除に失敗しました。
 
 errors:
