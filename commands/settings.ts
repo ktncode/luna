@@ -304,21 +304,35 @@ export default {
         }
 
         case 'delete-cross-server': {
-          const crossWebhookId = interaction.options.getInteger('cross_webhook_id');
+          const webhookName = interaction.options.getString('name');
           
-          if (!crossWebhookId) {
+          if (!webhookName) {
             await interaction.reply({
-              content: tCmd(interaction, 'commands.settings.webhook.cross.missing_id'),
+              content: tCmd(interaction, 'commands.settings.webhook.cross.missing_name'),
               flags: 64
             });
             return;
           }
 
-          const success = await deleteCrossServerWebhook(guildId, crossWebhookId);
+          // 名前で検索
+          const crossWebhooks = await getCrossServerWebhooks(guildId);
+          const targetCrossWebhook = crossWebhooks.find(w => w.webhook_name === webhookName && w.enabled);
+          
+          if (!targetCrossWebhook) {
+            await interaction.reply({
+              content: tCmd(interaction, 'commands.settings.webhook.cross.not_found'),
+              flags: 64
+            });
+            return;
+          }
+
+          const success = await deleteCrossServerWebhook(guildId, targetCrossWebhook.id);
           
           if (success) {
             await interaction.reply({
-              content: tCmd(interaction, 'commands.settings.webhook.cross.delete_success'),
+              content: tCmd(interaction, 'commands.settings.webhook.cross.delete_success', {
+                name: targetCrossWebhook.webhook_name
+              }),
               flags: 64
             });
           } else {

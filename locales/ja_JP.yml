@@ -139,11 +139,12 @@ commands:
         failed: クロスサーバーWebHookの追加に失敗しました。
         empty: 設定されているクロスサーバーWebHookはありません。
         title: "**クロスサーバーWebHook一覧**"
-        item: "ID: {id} | 名前: {name} | 方向: {direction}\nチャンネル: {channel} | 作成日: {created}"
+        item: "名前: {name} | 方向: {direction}\nチャンネル: {channel} | 作成日: {created}"
         outgoing: "送信"
         incoming: "受信"
-        missing_id: 削除するクロスサーバーWebHookのIDを指定してください。
-        delete_success: クロスサーバーWebHookを削除しました。
+        missing_name: 削除するクロスサーバーWebHookの名前を指定してください。
+        not_found: 指定されたクロスサーバーWebHookが見つかりません。
+        delete_success: "クロスサーバーWebHook「{name}」を削除しました。"
         delete_failed: クロスサーバーWebHookの削除に失敗しました。
 
 errors:

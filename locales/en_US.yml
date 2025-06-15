@@ -139,11 +139,12 @@ commands:
         failed: Failed to add cross-server webhook.
         empty: No cross-server webhooks configured.
         title: "**Cross-Server Webhooks**"
-        item: "ID: {id} | Name: {name} | Direction: {direction}\nChannel: {channel} | Created: {created}"
+        item: "Name: {name} | Direction: {direction}\nChannel: {channel} | Created: {created}"
         outgoing: "Outgoing"
         incoming: "Incoming"
-        missing_id: Please specify the cross-server webhook ID to delete.
-        delete_success: Cross-server webhook deleted successfully.
+        missing_name: Please specify the cross-server webhook name to delete.
+        not_found: The specified cross-server webhook was not found.
+        delete_success: "Cross-server webhook \"{name}\" deleted successfully."
         delete_failed: Failed to delete cross-server webhook.
 
 errors:
