@@ -635,6 +635,17 @@ export async function deleteCrossServerWebhook(guildId: string, crossWebhookId: 
             return false;
         }
         
+        // デバッグログ
+        console.log(`Delete cross-server webhook check:`, {
+            webhookId: crossWebhookId,
+            userId: userId,
+            createdBy: crossWebhook.created_by,
+            hasManageGuildPermission: hasManageGuildPermission,
+            guildId: guildId,
+            sourceGuildId: crossWebhook.source_guild_id,
+            targetGuildId: crossWebhook.target_guild_id
+        });
+        
         // ギルドに関連するかチェック
         if (crossWebhook.source_guild_id !== guildId && crossWebhook.target_guild_id !== guildId) {
             console.log(`Cross-server webhook not related to guild: ${guildId}`);
@@ -642,13 +653,15 @@ export async function deleteCrossServerWebhook(guildId: string, crossWebhookId: 
         }
         
         // 権限チェック：作成者または管理者権限を持つユーザーのみ削除可能
+        // created_byがnullやundefinedの場合も考慮
         if (crossWebhook.created_by !== userId && !hasManageGuildPermission) {
-            console.log(`Insufficient permissions to delete cross-server webhook: user ${userId}, creator ${crossWebhook.created_by}`);
+            console.log(`Insufficient permissions to delete cross-server webhook: user ${userId}, creator ${crossWebhook.created_by}, hasManageGuild: ${hasManageGuildPermission}`);
             return false;
         }
         
         const stmt = db.prepare('UPDATE cross_server_webhooks SET enabled = 0 WHERE id = ?');
         stmt.run(crossWebhookId);
+        console.log(`Cross-server webhook ${crossWebhookId} deleted successfully`);
         return true;
     } catch (error) {
         console.error('Error deleting cross-server webhook:', error);

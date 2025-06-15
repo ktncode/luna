@@ -336,6 +336,17 @@ export default {
           const hasManageGuildPermission = !!(member && typeof member.permissions !== 'string' && 
             member.permissions.has(PermissionFlagsBits.ManageGuild));
 
+          // デバッグログ
+          console.log('Cross-server webhook delete attempt:', {
+            userId: interaction.user.id,
+            guildId: guildId,
+            webhookId: targetCrossWebhook.id,
+            createdBy: targetCrossWebhook.created_by,
+            hasManageGuildPermission: hasManageGuildPermission,
+            member: !!member,
+            memberPermissions: member ? typeof member.permissions : 'no member'
+          });
+
           const success = await deleteCrossServerWebhook(guildId, targetCrossWebhook.id, interaction.user.id, hasManageGuildPermission);
           
           if (success) {
