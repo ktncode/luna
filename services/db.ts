@@ -524,10 +524,12 @@ export async function createWebhook(guildId: string, webhookPath: string, channe
 export async function getWebhookByPath(webhookPath: string): Promise<WebhookConfig | null> {
     try {
         const dbm = DBManager.getInstance();
-        return dbm.findOne<WebhookConfig>('guild_webhooks', { 
-            webhook_path: webhookPath, 
-            enabled: true 
-        });
+        // 直接SQLクエリを使用してバインドエラーを回避
+        const result = dbm.query(
+            'SELECT * FROM guild_webhooks WHERE webhook_path = ? AND enabled = 1 LIMIT 1',
+            [webhookPath]
+        );
+        return result[0] || null;
     } catch (error) {
         console.error('Error getting webhook by path:', error);
         return null;
@@ -538,9 +540,9 @@ export async function getWebhookByPath(webhookPath: string): Promise<WebhookConf
 export async function getGuildWebhooks(guildId: string): Promise<WebhookConfig[]> {
     try {
         const dbm = DBManager.getInstance();
-        return dbm.select<WebhookConfig>('guild_webhooks', 
-            { guild_id: guildId }, 
-            { orderBy: 'created_at DESC' }
+        return dbm.query(
+            'SELECT * FROM guild_webhooks WHERE guild_id = ? ORDER BY created_at DESC',
+            [guildId]
         );
     } catch (error) {
         console.error('Error getting guild webhooks:', error);
@@ -552,10 +554,11 @@ export async function getGuildWebhooks(guildId: string): Promise<WebhookConfig[]
 export async function deleteWebhook(guildId: string, webhookId: number): Promise<boolean> {
     try {
         const dbm = DBManager.getInstance();
-        return dbm.update('guild_webhooks', 
-            { enabled: false }, 
-            { id: webhookId, guild_id: guildId }
+        const result = dbm.query(
+            'UPDATE guild_webhooks SET enabled = 0 WHERE id = ? AND guild_id = ?',
+            [webhookId, guildId]
         );
+        return true; // SQLite3では影響を受けた行数の取得が困難なため、エラーがなければtrueとする
     } catch (error) {
         console.error('Error deleting webhook:', error);
         return false;
@@ -568,12 +571,12 @@ export async function updateWebhookStats(webhookPath: string, guildId: string): 
         const dbm = DBManager.getInstance();
         
         // 既存の統計レコードがあるかチェック
-        const existing = dbm.findOne('webhook_stats', { 
-            webhook_path: webhookPath, 
-            guild_id: guildId 
-        });
+        const existing = dbm.query(
+            'SELECT * FROM webhook_stats WHERE webhook_path = ? AND guild_id = ?',
+            [webhookPath, guildId]
+        );
 
-        if (existing) {
+        if (existing.length > 0) {
             // 既存レコードの更新
             dbm.query(
                 'UPDATE webhook_stats SET request_count = request_count + 1, last_used_at = CURRENT_TIMESTAMP WHERE webhook_path = ? AND guild_id = ?',

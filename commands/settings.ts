@@ -104,7 +104,7 @@ export default {
           if (!name || !channelId) {
             await interaction.reply({
               content: tCmd(interaction, 'commands.settings.webhook.create.missing_params'),
-              ephemeral: true
+              flags: 64
             });
             return;
           }
@@ -113,7 +113,7 @@ export default {
           if (!/^\d{17,19}$/.test(channelId)) {
             await interaction.reply({
               content: tCmd(interaction, 'commands.settings.webhook.create.invalid_channel'),
-              ephemeral: true
+              flags: 64
             });
             return;
           }
@@ -138,12 +138,12 @@ export default {
                 url: webhookUrl,
                 channel: channelMention
               }),
-              ephemeral: true
+              flags: 64
             });
           } else {
             await interaction.reply({
               content: tCmd(interaction, 'commands.settings.webhook.create.failed'),
-              ephemeral: true
+              flags: 64
             });
           }
           break;
@@ -155,7 +155,7 @@ export default {
           if (webhooks.length === 0) {
             await interaction.reply({
               content: tCmd(interaction, 'commands.settings.webhook.list.empty'),
-              ephemeral: true
+              flags: 64
             });
             return;
           }
@@ -173,7 +173,7 @@ export default {
 
           await interaction.reply({
             content: tCmd(interaction, 'commands.settings.webhook.list.title') + '\n' + webhookList,
-            ephemeral: true
+            flags: 64
           });
           break;
         }
@@ -184,7 +184,7 @@ export default {
           if (!webhookId) {
             await interaction.reply({
               content: tCmd(interaction, 'commands.settings.webhook.delete.missing_id'),
-              ephemeral: true
+              flags: 64
             });
             return;
           }
@@ -194,12 +194,12 @@ export default {
           if (success) {
             await interaction.reply({
               content: tCmd(interaction, 'commands.settings.webhook.delete.success'),
-              ephemeral: true
+              flags: 64
             });
           } else {
             await interaction.reply({
               content: tCmd(interaction, 'commands.settings.webhook.delete.failed'),
-              ephemeral: true
+              flags: 64
             });
           }
           break;
