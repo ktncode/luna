@@ -8,6 +8,7 @@ import { Client, GatewayIntentBits } from 'discord.js';
 import dotenv from 'dotenv';
 import { loadCommands } from './services/command.js';
 import { initializeDatabase } from './services/db.js';
+import { createWebhookServer } from './services/webhook.js';
 
 dotenv.config();
 
@@ -54,8 +55,21 @@ async function main() {
   }
 }
 
-client.once('ready', () => {
+// Bot initialization
+client.once('ready', async () => {
   console.log(`Logged in as ${client.user?.tag}!`);
+  
+  // WebHookサーバーを初期化して起動
+  const webhookServer = createWebhookServer(client);
+  webhookServer.start();
+  
+  // プロセス終了時のクリーンアップ
+  process.on('SIGINT', () => {
+      console.log('Shutting down...');
+      webhookServer.stop();
+      client.destroy();
+      process.exit(0);
+  });
 });
 
 main();
