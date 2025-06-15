@@ -6,7 +6,7 @@
 
 import { ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, SlashCommandSubcommandBuilder } from 'discord.js';
 import { tCmd } from '../services/i18n.js';
-import { createWebhook, getGuildWebhooks, deleteWebhook, I18nManager } from '../services/db.js';
+import { createWebhook, getGuildWebhooks, deleteWebhook, I18nManager, createCrossServerWebhook, getCrossServerWebhooks, deleteCrossServerWebhook } from '../services/db.js';
 import { randomBytes } from 'crypto';
 
 export default {
@@ -48,7 +48,10 @@ export default {
             .addChoices(
               { name: 'create', value: 'create' },
               { name: 'list', value: 'list' },
-              { name: 'delete', value: 'delete' }
+              { name: 'delete', value: 'delete' },
+              { name: 'add-cross-server', value: 'add-cross-server' },
+              { name: 'list-cross-server', value: 'list-cross-server' },
+              { name: 'delete-cross-server', value: 'delete-cross-server' }
             )
         )
         .addStringOption(option =>
@@ -62,6 +65,19 @@ export default {
             .setDescriptionLocalization('ja', 'メッセージを送信するDiscordチャンネルID')
             .setRequired(false)
         )
+        .addStringOption(option =>
+          option.setName('webhook_url')
+            .setDescription('Webhook URL from another server')
+            .setDescriptionLocalization('ja', '他のサーバーのWebHook URL')
+            .setRequired(false)
+        )
+        .addIntegerOption(option =>
+          option.setName('cross_webhook_id')
+            .setDescription('Cross-server webhook ID to delete')
+            .setDescriptionLocalization('ja', '削除するクロスサーバーWebHookのID')
+            .setRequired(false)
+        )
+
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
@@ -206,6 +222,108 @@ export default {
           } else {
             await interaction.reply({
               content: tCmd(interaction, 'commands.settings.webhook.delete.failed'),
+              flags: 64
+            });
+          }
+          break;
+        }
+
+        case 'add-cross-server': {
+          const webhookUrl = interaction.options.getString('webhook_url');
+          const name = interaction.options.getString('name');
+          const channelId = interaction.options.getString('channel_id');
+
+          if (!webhookUrl || !name || !channelId) {
+            await interaction.reply({
+              content: tCmd(interaction, 'commands.settings.webhook.cross.missing_params'),
+              flags: 64
+            });
+            return;
+          }
+
+          // WebHook URLからパスを抽出
+          const urlMatch = webhookUrl.match(/https:\/\/luna\.ktn\.cat\/webhook\/([a-f0-9]{12})/);
+          if (!urlMatch) {
+            await interaction.reply({
+              content: tCmd(interaction, 'commands.settings.webhook.cross.invalid_url'),
+              flags: 64
+            });
+            return;
+          }
+
+          const webhookPath = urlMatch[1];
+          const success = await createCrossServerWebhook(guildId, guildId, channelId, webhookPath, name);
+
+          if (success) {
+            await interaction.reply({
+              content: tCmd(interaction, 'commands.settings.webhook.cross.success', { 
+                name: name,
+                channel: `<#${channelId}>`
+              }),
+              flags: 64
+            });
+          } else {
+            await interaction.reply({
+              content: tCmd(interaction, 'commands.settings.webhook.cross.failed'),
+              flags: 64
+            });
+          }
+          break;
+        }
+
+        case 'list-cross-server': {
+          const crossWebhooks = await getCrossServerWebhooks(guildId);
+          
+          if (crossWebhooks.length === 0) {
+            await interaction.reply({
+              content: tCmd(interaction, 'commands.settings.webhook.cross.empty'),
+              flags: 64
+            });
+            return;
+          }
+
+          const crossWebhookList = crossWebhooks
+            .filter(w => w.enabled)
+            .map(w => {
+              const direction = w.source_guild_id === guildId ? 'outgoing' : 'incoming';
+              return tCmd(interaction, 'commands.settings.webhook.cross.item', {
+                id: w.id,
+                name: w.webhook_name,
+                direction: tCmd(interaction, `commands.settings.webhook.cross.${direction}`),
+                channel: `<#${w.target_channel_id}>`,
+                created: new Date(w.created_at).toLocaleDateString()
+              });
+            })
+            .join('\n');
+
+          await interaction.reply({
+            content: tCmd(interaction, 'commands.settings.webhook.cross.title') + '\n' + crossWebhookList,
+            flags: 64
+          });
+          break;
+        }
+
+        case 'delete-cross-server': {
+          const crossWebhookId = interaction.options.getInteger('cross_webhook_id');
+          
+          if (!crossWebhookId) {
+            await interaction.reply({
+              content: tCmd(interaction, 'commands.settings.webhook.cross.missing_id'),
+              flags: 64
+            });
+            return;
+          }
+
+          const success = await deleteCrossServerWebhook(guildId, crossWebhookId);
+          
+          if (success) {
+            await interaction.reply({
+              content: tCmd(interaction, 'commands.settings.webhook.cross.delete_success'),
+              flags: 64
+            });
+          } else {
+            await interaction.reply({
+              content: tCmd(interaction, 'commands.settings.webhook.cross.delete_failed'),
               flags: 64
             });
           }

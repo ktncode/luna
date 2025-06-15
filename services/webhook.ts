@@ -3,7 +3,7 @@
 
 import * as http from 'http';
 import * as url from 'url';
-import { getWebhookByPath, updateWebhookStats } from './db.js';
+import { getWebhookByPath, updateWebhookStats, getCrossServerTargets } from './db.js';
 import { Client } from 'discord.js';
 
 const WEBHOOK_PORT = process.env.WEBHOOK_PORT || 3000;
@@ -79,6 +79,12 @@ export class WebhookServer {
 
             // Botからチャンネルに送信
             const success = await this.sendToChannel(webhookConfig.channel_id, webhookData, webhookConfig.name);
+            
+            // クロスサーバー配信もチェック
+            const crossTargets = await getCrossServerTargets(webhookPath);
+            for (const target of crossTargets) {
+                await this.sendToChannel(target.target_channel_id, webhookData, target.webhook_name);
+            }
 
             if (success) {
                 // 統計を更新
