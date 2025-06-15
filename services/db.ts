@@ -625,10 +625,12 @@ export async function deleteCrossServerWebhook(guildId: string, crossWebhookId: 
         const dbm = DBManager.getInstance();
         
         // クロスサーバーWebHookの存在と作成者をチェック
-        const crossWebhook = dbm.findOne<CrossServerWebhookConfig>('cross_server_webhooks', { 
-            id: crossWebhookId,
-            enabled: true
-        });
+        const result = dbm.query(
+            'SELECT * FROM cross_server_webhooks WHERE id = ? AND enabled = 1 LIMIT 1',
+            [crossWebhookId]
+        );
+        
+        const crossWebhook = result[0] as CrossServerWebhookConfig;
         
         if (!crossWebhook) {
             console.log(`Cross-server webhook not found: ${crossWebhookId}`);
