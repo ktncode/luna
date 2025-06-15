@@ -554,11 +554,9 @@ export async function getGuildWebhooks(guildId: string): Promise<WebhookConfig[]
 export async function deleteWebhook(guildId: string, webhookId: number): Promise<boolean> {
     try {
         const dbm = DBManager.getInstance();
-        const result = dbm.query(
-            'UPDATE guild_webhooks SET enabled = 0 WHERE id = ? AND guild_id = ?',
-            [webhookId, guildId]
-        );
-        return true; // SQLite3では影響を受けた行数の取得が困難なため、エラーがなければtrueとする
+        const stmt = db.prepare('UPDATE guild_webhooks SET enabled = 0 WHERE id = ? AND guild_id = ?');
+        stmt.run(webhookId, guildId);
+        return true;
     } catch (error) {
         console.error('Error deleting webhook:', error);
         return false;
@@ -578,10 +576,10 @@ export async function updateWebhookStats(webhookPath: string, guildId: string): 
 
         if (existing.length > 0) {
             // 既存レコードの更新
-            dbm.query(
-                'UPDATE webhook_stats SET request_count = request_count + 1, last_used_at = CURRENT_TIMESTAMP WHERE webhook_path = ? AND guild_id = ?',
-                [webhookPath, guildId]
+            const updateStmt = db.prepare(
+                'UPDATE webhook_stats SET request_count = request_count + 1, last_used_at = CURRENT_TIMESTAMP WHERE webhook_path = ? AND guild_id = ?'
             );
+            updateStmt.run(webhookPath, guildId);
         } else {
             // 新規レコードの作成
             dbm.insert('webhook_stats', {
