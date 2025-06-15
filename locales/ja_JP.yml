@@ -132,6 +132,7 @@ commands:
         not_found: 指定されたWebHookが見つかりません。
         success: "WebHook「{name}」を削除しました。"
         failed: WebHookの削除に失敗しました。
+        permission_denied: WebHookを削除する権限がありません。作成者または管理者権限が必要です。
       cross:
         missing_params: WebHook URL、名前、チャンネルIDがすべて必要です。
         invalid_url: 有効なLuna Bot WebHook URLを入力してください。
@@ -146,6 +147,7 @@ commands:
         not_found: 指定されたクロスサーバーWebHookが見つかりません。
         delete_success: "クロスサーバーWebHook「{name}」を削除しました。"
         delete_failed: クロスサーバーWebHookの削除に失敗しました。
+        permission_denied: クロスサーバーWebHookを削除する権限がありません。作成者または管理者権限が必要です。
 
 errors:
   command_error: "このコマンドの実行中にエラーが発生しました！"

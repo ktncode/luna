@@ -135,7 +135,7 @@ export default {
           
           do {
             webhookPath = randomBytes(6).toString('hex'); // 12桁のhex文字列
-            success = await createWebhook(guildId, webhookPath, channelId, name);
+            success = await createWebhook(guildId, webhookPath, channelId, name, interaction.user.id);
             attempts++;
           } while (!success && attempts < 10);
 
@@ -210,7 +210,12 @@ export default {
             return;
           }
 
-          const success = await deleteWebhook(guildId, targetWebhook.id);
+          // 権限チェック
+          const member = interaction.member;
+          const hasManageGuildPermission = !!(member && typeof member.permissions !== 'string' && 
+            member.permissions.has(PermissionFlagsBits.ManageGuild));
+
+          const success = await deleteWebhook(guildId, targetWebhook.id, interaction.user.id, hasManageGuildPermission);
           
           if (success) {
             await interaction.reply({
@@ -221,7 +226,7 @@ export default {
             });
           } else {
             await interaction.reply({
-              content: tCmd(interaction, 'commands.settings.webhook.delete.failed'),
+              content: tCmd(interaction, 'commands.settings.webhook.delete.permission_denied'),
               flags: 64
             });
           }
@@ -252,7 +257,7 @@ export default {
           }
 
           const webhookPath = urlMatch[1];
-          const success = await createCrossServerWebhook(guildId, guildId, channelId, webhookPath, name);
+          const success = await createCrossServerWebhook(guildId, guildId, channelId, webhookPath, name, interaction.user.id);
 
           if (success) {
             await interaction.reply({
@@ -283,8 +288,8 @@ export default {
           }
 
           const crossWebhookList = crossWebhooks
-            .filter(w => w.enabled)
-            .map(w => {
+            .filter((w: any) => w.enabled)
+            .map((w: any) => {
               const direction = w.source_guild_id === guildId ? 'outgoing' : 'incoming';
               return tCmd(interaction, 'commands.settings.webhook.cross.item', {
                 id: w.id,
@@ -316,7 +321,7 @@ export default {
 
           // 名前で検索
           const crossWebhooks = await getCrossServerWebhooks(guildId);
-          const targetCrossWebhook = crossWebhooks.find(w => w.webhook_name === webhookName && w.enabled);
+          const targetCrossWebhook = crossWebhooks.find((w: any) => w.webhook_name === webhookName && w.enabled);
           
           if (!targetCrossWebhook) {
             await interaction.reply({
@@ -326,7 +331,12 @@ export default {
             return;
           }
 
-          const success = await deleteCrossServerWebhook(guildId, targetCrossWebhook.id);
+          // 権限チェック
+          const member = interaction.member;
+          const hasManageGuildPermission = !!(member && typeof member.permissions !== 'string' && 
+            member.permissions.has(PermissionFlagsBits.ManageGuild));
+
+          const success = await deleteCrossServerWebhook(guildId, targetCrossWebhook.id, interaction.user.id, hasManageGuildPermission);
           
           if (success) {
             await interaction.reply({
@@ -337,7 +347,7 @@ export default {
             });
           } else {
             await interaction.reply({
-              content: tCmd(interaction, 'commands.settings.webhook.cross.delete_failed'),
+              content: tCmd(interaction, 'commands.settings.webhook.cross.permission_denied'),
               flags: 64
             });
           }

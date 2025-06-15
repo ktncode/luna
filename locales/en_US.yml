@@ -132,6 +132,7 @@ commands:
         not_found: The specified webhook was not found.
         success: "Webhook \"{name}\" deleted successfully."
         failed: Failed to delete webhook.
+        permission_denied: You don't have permission to delete this webhook. Creator or administrator permission required.
       cross:
         missing_params: Webhook URL, name, and channel ID are all required.
         invalid_url: Please provide a valid Luna Bot webhook URL.
@@ -146,6 +147,7 @@ commands:
         not_found: The specified cross-server webhook was not found.
         delete_success: "Cross-server webhook \"{name}\" deleted successfully."
         delete_failed: Failed to delete cross-server webhook.
+        permission_denied: You don't have permission to delete this cross-server webhook. Creator or administrator permission required.
 
 errors:
   command_error: "There was an error while executing this command!"
