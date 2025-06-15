@@ -494,8 +494,12 @@ export async function createWebhook(guildId: string, webhookPath: string, channe
         const dbm = DBManager.getInstance();
         
         // guild_i18nレコードが存在しない場合は作成
-        const existingGuild = dbm.findOne('guild_i18n', { guild_id: guildId });
-        if (!existingGuild) {
+        const existingGuildResult = dbm.query(
+            'SELECT * FROM guild_i18n WHERE guild_id = ? LIMIT 1',
+            [guildId]
+        );
+        
+        if (existingGuildResult.length === 0) {
             dbm.insert('guild_i18n', {
                 guild_id: guildId,
                 locale: null
@@ -503,11 +507,12 @@ export async function createWebhook(guildId: string, webhookPath: string, channe
         }
         
         // WebHookパスの重複チェック（全体で一意である必要がある）
-        const existingPath = dbm.findOne('guild_webhooks', { 
-            webhook_path: webhookPath 
-        });
+        const existingPathResult = dbm.query(
+            'SELECT * FROM guild_webhooks WHERE webhook_path = ? LIMIT 1',
+            [webhookPath]
+        );
         
-        if (existingPath) {
+        if (existingPathResult.length > 0) {
             console.log(`Webhook path collision detected: ${webhookPath}`);
             return false; // パスが重複している
         }
@@ -554,14 +559,29 @@ export async function deleteWebhook(guildId: string, webhookId: number, userId: 
             return false;
         }
         
+        console.log(`Delete webhook check:`, {
+            webhookId: webhookId,
+            userId: userId,
+            createdBy: webhook.created_by,
+            hasManageGuildPermission: hasManageGuildPermission
+        });
+        
         // 権限チェック：作成者または管理者権限を持つユーザーのみ削除可能
-        if (webhook.created_by !== userId && !hasManageGuildPermission) {
+        // created_byがnullやundefinedの場合は管理者権限が必要
+        if (!webhook.created_by) {
+            // 作成者情報がない場合は管理者権限が必要
+            if (!hasManageGuildPermission) {
+                console.log(`No creator info, admin permission required: user ${userId}`);
+                return false;
+            }
+        } else if (webhook.created_by !== userId && !hasManageGuildPermission) {
             console.log(`Insufficient permissions to delete webhook: user ${userId}, creator ${webhook.created_by}`);
             return false;
         }
         
         const stmt = db.prepare('UPDATE guild_webhooks SET enabled = 0 WHERE id = ? AND guild_id = ?');
         stmt.run(webhookId, guildId);
+        console.log(`Webhook ${webhookId} deleted successfully by user ${userId}`);
         return true;
     } catch (error) {
         console.error('Error deleting webhook:', error);
@@ -655,15 +675,21 @@ export async function deleteCrossServerWebhook(guildId: string, crossWebhookId: 
         }
         
         // 権限チェック：作成者または管理者権限を持つユーザーのみ削除可能
-        // created_byがnullやundefinedの場合も考慮
-        if (crossWebhook.created_by !== userId && !hasManageGuildPermission) {
+        // created_byがnullやundefinedの場合は管理者権限が必要
+        if (!crossWebhook.created_by) {
+            // 作成者情報がない場合は管理者権限が必要
+            if (!hasManageGuildPermission) {
+                console.log(`No creator info for cross-server webhook, admin permission required: user ${userId}`);
+                return false;
+            }
+        } else if (crossWebhook.created_by !== userId && !hasManageGuildPermission) {
             console.log(`Insufficient permissions to delete cross-server webhook: user ${userId}, creator ${crossWebhook.created_by}, hasManageGuild: ${hasManageGuildPermission}`);
             return false;
         }
         
         const stmt = db.prepare('UPDATE cross_server_webhooks SET enabled = 0 WHERE id = ?');
         stmt.run(crossWebhookId);
-        console.log(`Cross-server webhook ${crossWebhookId} deleted successfully`);
+        console.log(`Cross-server webhook ${crossWebhookId} deleted successfully by user ${userId}`);
         return true;
     } catch (error) {
         console.error('Error deleting cross-server webhook:', error);
