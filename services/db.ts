@@ -460,3 +460,312 @@ export function getGuildLocale(guildId: string): string | null {
 export function setGuildLocale(guildId: string, locale: string | null): boolean {
   return I18nManager.setGuildLocale(guildId, locale);
 }
+
+// WebHook関連のインターフェース
+export interface WebhookConfig {
+    id: number;
+    guild_id: string;
+    webhook_path: string;
+    channel_id: string;
+    name: string;
+    enabled: boolean;
+    created_at: string;
+    updated_at: string;
+    created_by?: string;
+}
+
+// クロスサーバーWebHook関連のインターフェース
+export interface CrossServerWebhookConfig {
+    id: number;
+    source_guild_id: string;
+    target_guild_id: string;
+    target_channel_id: string;
+    webhook_path: string;
+    webhook_name: string;
+    enabled: boolean;
+    created_at: string;
+    updated_at: string;
+    created_by?: string;
+}
+
+// WebHook設定の作成
+export async function createWebhook(guildId: string, webhookPath: string, channelId: string, name: string, userId: string): Promise<boolean> {
+    try {
+        const dbm = DBManager.getInstance();
+        
+        // guild_i18nレコードが存在しない場合は作成
+        const existingGuildResult = dbm.query(
+            'SELECT * FROM guild_i18n WHERE guild_id = ? LIMIT 1',
+            [guildId]
+        );
+        
+        if (existingGuildResult.length === 0) {
+            dbm.insert('guild_i18n', {
+                guild_id: guildId,
+                locale: null
+            });
+        }
+        
+        // WebHookパスの重複チェック（全体で一意である必要がある）
+        const existingPathResult = dbm.query(
+            'SELECT * FROM guild_webhooks WHERE webhook_path = ? LIMIT 1',
+            [webhookPath]
+        );
+        
+        if (existingPathResult.length > 0) {
+            console.log(`Webhook path collision detected: ${webhookPath}`);
+            return false; // パスが重複している
+        }
+        
+        // 既存のWebHook数をチェック（最大5つまで）
+        const countResult = dbm.query(
+            'SELECT COUNT(*) as count FROM guild_webhooks WHERE guild_id = ? AND enabled = TRUE',
+            [guildId]
+        );
+        
+        if (countResult[0]?.count >= 5) {
+            console.log(`Webhook limit reached for guild: ${guildId}`);
+            return false; // 上限に達している
+        }
+
+        return dbm.insert('guild_webhooks', {
+            guild_id: guildId,
+            webhook_path: webhookPath,
+            channel_id: channelId,
+            name: name,
+            created_by: userId
+        });
+    } catch (error) {
+        console.error('Error creating webhook:', error);
+        return false;
+    }
+}
+
+// WebHook設定の削除（権限チェック付き）
+export async function deleteWebhook(guildId: string, webhookId: number, userId: string, hasAdministratorPermission: boolean): Promise<boolean> {
+    try {
+        const dbm = DBManager.getInstance();
+        
+        // WebHookの存在と作成者をチェック
+        const result = dbm.query(
+            'SELECT * FROM guild_webhooks WHERE id = ? AND guild_id = ? AND enabled = 1 LIMIT 1',
+            [webhookId, guildId]
+        );
+        
+        const webhook = result[0] as WebhookConfig;
+        
+        if (!webhook) {
+            console.log(`Webhook not found: ${webhookId}`);
+            return false;
+        }
+        
+        console.log(`Delete webhook check:`, {
+            webhookId: webhookId,
+            userId: userId,
+            createdBy: webhook.created_by,
+            hasAdministratorPermission: hasAdministratorPermission
+        });
+        
+        // 権限チェック：作成者またはAdministrator権限を持つユーザーのみ削除可能
+        if (webhook.created_by !== userId && !hasAdministratorPermission) {
+            console.log(`Insufficient permissions to delete webhook: user ${userId}, creator ${webhook.created_by}`);
+            return false;
+        }
+        
+        const stmt = db.prepare('UPDATE guild_webhooks SET enabled = 0 WHERE id = ? AND guild_id = ?');
+        stmt.run(webhookId, guildId);
+        console.log(`Webhook ${webhookId} deleted successfully by user ${userId}`);
+        return true;
+    } catch (error) {
+        console.error('Error deleting webhook:', error);
+        return false;
+    }
+}
+
+// クロスサーバーWebHook設定の作成
+export async function createCrossServerWebhook(
+    sourceGuildId: string, 
+    targetGuildId: string, 
+    targetChannelId: string, 
+    webhookPath: string, 
+    webhookName: string,
+    userId: string
+): Promise<boolean> {
+    try {
+        const dbm = DBManager.getInstance();
+        
+        // WebHookパスが存在するかチェック
+        const existingWebhook = await getWebhookByPath(webhookPath);
+        if (!existingWebhook) {
+            console.log(`Webhook path not found: ${webhookPath}`);
+            return false;
+        }
+        
+        // WebHook名が一致するかチェック
+        if (existingWebhook.name !== webhookName) {
+            console.log(`Webhook name mismatch: expected ${webhookName}, got ${existingWebhook.name}`);
+            return false;
+        }
+        
+        // 既存のクロスサーバー設定をチェック
+        const existingResult = dbm.query(
+            'SELECT * FROM cross_server_webhooks WHERE source_guild_id = ? AND target_guild_id = ? AND webhook_path = ? LIMIT 1',
+            [sourceGuildId, targetGuildId, webhookPath]
+        );
+        
+        if (existingResult.length > 0) {
+            console.log(`Cross-server webhook already exists`);
+            return false;
+        }
+
+        return dbm.insert('cross_server_webhooks', {
+            source_guild_id: sourceGuildId,
+            target_guild_id: targetGuildId,
+            target_channel_id: targetChannelId,
+            webhook_path: webhookPath,
+            webhook_name: webhookName,
+            created_by: userId
+        });
+    } catch (error) {
+        console.error('Error creating cross-server webhook:', error);
+        return false;
+    }
+}
+
+// クロスサーバーWebHook削除（権限チェック付き）
+export async function deleteCrossServerWebhook(guildId: string, crossWebhookId: number, userId: string, hasAdministratorPermission: boolean): Promise<boolean> {
+    try {
+        const dbm = DBManager.getInstance();
+        
+        // クロスサーバーWebHookの存在と作成者をチェック
+        const result = dbm.query(
+            'SELECT * FROM cross_server_webhooks WHERE id = ? AND enabled = 1 LIMIT 1',
+            [crossWebhookId]
+        );
+        
+        const crossWebhook = result[0] as CrossServerWebhookConfig;
+        
+        if (!crossWebhook) {
+            console.log(`Cross-server webhook not found: ${crossWebhookId}`);
+            return false;
+        }
+        
+        // デバッグログ
+        console.log(`Delete cross-server webhook check:`, {
+            webhookId: crossWebhookId,
+            userId: userId,
+            createdBy: crossWebhook.created_by,
+            hasAdministratorPermission: hasAdministratorPermission,
+            guildId: guildId,
+            sourceGuildId: crossWebhook.source_guild_id,
+            targetGuildId: crossWebhook.target_guild_id
+        });
+        
+        // ギルドに関連するかチェック
+        if (crossWebhook.source_guild_id !== guildId && crossWebhook.target_guild_id !== guildId) {
+            console.log(`Cross-server webhook not related to guild: ${guildId}`);
+            return false;
+        }
+        
+        // 権限チェック：作成者またはAdministrator権限を持つユーザーのみ削除可能
+        if (crossWebhook.created_by !== userId && !hasAdministratorPermission) {
+            console.log(`Insufficient permissions to delete cross-server webhook: user ${userId}, creator ${crossWebhook.created_by}, hasAdministrator: ${hasAdministratorPermission}`);
+            return false;
+        }
+        
+        const stmt = db.prepare('UPDATE cross_server_webhooks SET enabled = 0 WHERE id = ?');
+        stmt.run(crossWebhookId);
+        console.log(`Cross-server webhook ${crossWebhookId} deleted successfully by user ${userId}`);
+        return true;
+    } catch (error) {
+        console.error('Error deleting cross-server webhook:', error);
+        return false;
+    }
+}
+
+// WebHookパスに対応するクロスサーバー設定を取得
+export async function getCrossServerTargets(webhookPath: string): Promise<CrossServerWebhookConfig[]> {
+    try {
+        const dbm = DBManager.getInstance();
+        return dbm.query(
+            'SELECT * FROM cross_server_webhooks WHERE webhook_path = ? AND enabled = 1',
+            [webhookPath]
+        );
+    } catch (error) {
+        console.error('Error getting cross-server targets:', error);
+        return [];
+    }
+}
+
+// WebHook統計の更新
+export async function updateWebhookStats(webhookPath: string, guildId: string): Promise<void> {
+    try {
+        const dbm = DBManager.getInstance();
+        
+        // 既存の統計レコードがあるかチェック
+        const existing = dbm.query(
+            'SELECT * FROM webhook_stats WHERE webhook_path = ? AND guild_id = ?',
+            [webhookPath, guildId]
+        );
+
+        if (existing.length > 0) {
+            // 既存レコードの更新
+            const updateStmt = db.prepare(
+                'UPDATE webhook_stats SET request_count = request_count + 1, last_used_at = CURRENT_TIMESTAMP WHERE webhook_path = ? AND guild_id = ?'
+            );
+            updateStmt.run(webhookPath, guildId);
+        } else {
+            // 新規レコードの作成
+            dbm.insert('webhook_stats', {
+                webhook_path: webhookPath,
+                guild_id: guildId
+            });
+        }
+    } catch (error) {
+        console.error('Error updating webhook stats:', error);
+    }
+}
+
+// WebHook設定の取得（パス指定）
+export async function getWebhookByPath(webhookPath: string): Promise<WebhookConfig | null> {
+    try {
+        const dbm = DBManager.getInstance();
+        // 直接SQLクエリを使用してバインドエラーを回避
+        const result = dbm.query(
+            'SELECT * FROM guild_webhooks WHERE webhook_path = ? AND enabled = 1 LIMIT 1',
+            [webhookPath]
+        );
+        return result[0] || null;
+    } catch (error) {
+        console.error('Error getting webhook by path:', error);
+        return null;
+    }
+}
+
+// ギルドのWebHook一覧取得
+export async function getGuildWebhooks(guildId: string): Promise<WebhookConfig[]> {
+    try {
+        const dbm = DBManager.getInstance();
+        return dbm.query(
+            'SELECT * FROM guild_webhooks WHERE guild_id = ? ORDER BY created_at DESC',
+            [guildId]
+        );
+    } catch (error) {
+        console.error('Error getting guild webhooks:', error);
+        return [];
+    }
+}
+
+// クロスサーバーWebHook一覧取得
+export async function getCrossServerWebhooks(guildId: string): Promise<CrossServerWebhookConfig[]> {
+    try {
+        const dbm = DBManager.getInstance();
+        return dbm.query(
+            'SELECT * FROM cross_server_webhooks WHERE source_guild_id = ? OR target_guild_id = ? ORDER BY created_at DESC',
+            [guildId, guildId]
+        );
+    } catch (error) {
+        console.error('Error getting cross-server webhooks:', error);
+        return [];
+    }
+}

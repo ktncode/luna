@@ -117,6 +117,37 @@ commands:
       other_section: "その他の設定"
       coming_soon: "今後追加予定..."
       footer: "設定を変更するには /settings コマンドを使用してください"
+    webhook:
+      create:
+        missing_params: WebHook名とチャンネルIDの両方が必要です。
+        invalid_channel: 有効なチャンネルIDを入力してください。
+        success: "WebHook「{name}」を作成しました。\nURL: {url}\nチャンネル: {channel}"
+        failed: WebHookの作成に失敗しました。（上限は5つまでです）
+      list:
+        empty: 設定されているWebHookはありません。
+        title: "**設定されているWebHook一覧**"
+        item: "名前: {name}\nURL: {url}\nチャンネル: {channel}\n作成日: {created}"
+      delete:
+        missing_name: 削除するWebHookの名前を指定してください。
+        not_found: 指定されたWebHookが見つかりません。
+        success: "WebHook「{name}」を削除しました。"
+        failed: WebHookの削除に失敗しました。
+        permission_denied: WebHookを削除する権限がありません。作成者または管理者権限が必要です。
+      cross:
+        missing_params: WebHook URL、名前、チャンネルIDがすべて必要です。
+        invalid_url: 有効なLuna Bot WebHook URLを入力してください。
+        success: "クロスサーバーWebHook「{name}」を追加しました。\nチャンネル: {channel}"
+        failed: クロスサーバーWebHookの追加に失敗しました。
+        empty: 設定されているクロスサーバーWebHookはありません。
+        title: "**クロスサーバーWebHook一覧**"
+        item: "名前: {name} | 方向: {direction}\nチャンネル: {channel} | 作成日: {created}"
+        outgoing: "送信"
+        incoming: "受信"
+        missing_name: 削除するクロスサーバーWebHookの名前を指定してください。
+        not_found: 指定されたクロスサーバーWebHookが見つかりません。
+        delete_success: "クロスサーバーWebHook「{name}」を削除しました。"
+        delete_failed: クロスサーバーWebHookの削除に失敗しました。
+        permission_denied: クロスサーバーWebHookを削除する権限がありません。作成者または管理者権限が必要です。
 
 errors:
   command_error: "このコマンドの実行中にエラーが発生しました！"

@@ -117,6 +117,37 @@ commands:
       other_section: "Other Settings"
       coming_soon: "Coming soon..."
       footer: "Use /settings commands to modify settings"
+    webhook:
+      create:
+        missing_params: Both webhook name and channel ID are required.
+        invalid_channel: Please provide a valid channel ID.
+        success: "Created webhook \"{name}\".\nURL: {url}\nChannel: {channel}"
+        failed: Failed to create webhook. (Maximum 5 webhooks per server)
+      list:
+        empty: No webhooks configured.
+        title: "**Configured Webhooks**"
+        item: "Name: {name}\nURL: {url}\nChannel: {channel}\nCreated: {created}"
+      delete:
+        missing_name: Please specify the webhook name to delete.
+        not_found: The specified webhook was not found.
+        success: "Webhook \"{name}\" deleted successfully."
+        failed: Failed to delete webhook.
+        permission_denied: You don't have permission to delete this webhook. Creator or administrator permission required.
+      cross:
+        missing_params: Webhook URL, name, and channel ID are all required.
+        invalid_url: Please provide a valid Luna Bot webhook URL.
+        success: "Added cross-server webhook \"{name}\".\nChannel: {channel}"
+        failed: Failed to add cross-server webhook.
+        empty: No cross-server webhooks configured.
+        title: "**Cross-Server Webhooks**"
+        item: "Name: {name} | Direction: {direction}\nChannel: {channel} | Created: {created}"
+        outgoing: "Outgoing"
+        incoming: "Incoming"
+        missing_name: Please specify the cross-server webhook name to delete.
+        not_found: The specified cross-server webhook was not found.
+        delete_success: "Cross-server webhook \"{name}\" deleted successfully."
+        delete_failed: Failed to delete cross-server webhook.
+        permission_denied: You don't have permission to delete this cross-server webhook. Creator or administrator permission required.
 
 errors:
   command_error: "There was an error while executing this command!"
