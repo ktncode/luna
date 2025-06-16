@@ -40,6 +40,13 @@ export class WebhookServer {
             return;
         }
 
+        // WebHookパス以外は404を返す
+        if (!pathname.startsWith('/webhook/')) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Not found' }));
+            return;
+        }
+
         if (req.method !== 'POST') {
             res.writeHead(405, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Method not allowed' }));
@@ -50,7 +57,7 @@ export class WebhookServer {
         const webhookMatch = pathname.match(/^\/webhook\/([a-f0-9]{12})$/);
         if (!webhookMatch) {
             res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Webhook path not found' }));
+            res.end(JSON.stringify({ error: 'Invalid webhook path format' }));
             return;
         }
 
