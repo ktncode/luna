@@ -1,5 +1,7 @@
 -- SPDX-License-Identifier: MPL-2.0
+-- Initialize webhook tables
 -- This Source Code Form is subject to the terms of the Mozilla Public License v2.0
+-- Copyright (c) Kotone <git@ktn.works>
 
 -- ギルドのWebHook設定テーブル
 CREATE TABLE IF NOT EXISTS guild_webhooks (

@@ -1,6 +1,7 @@
 -- SPDX-License-Identifier: MPL-2.0
 -- Add cross-server webhook functionality
 -- This Source Code Form is subject to the terms of the Mozilla Public License v2.0
+-- Copyright (c) Kotone <git@ktn.works>
 
 -- クロスサーバーWebHook設定テーブル
 CREATE TABLE IF NOT EXISTS cross_server_webhooks (

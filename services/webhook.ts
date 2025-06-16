@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 // This Source Code Form is subject to the terms of the Mozilla Public License v2.0
+// Copyright (c) Kotone <git@ktn.works>
 
 import * as http from 'http';
 import * as url from 'url';

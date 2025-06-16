@@ -1,6 +1,7 @@
 -- SPDX-License-Identifier: MPL-2.0
 -- Add user tracking for webhook management
 -- This Source Code Form is subject to the terms of the Mozilla Public License v2.0
+-- Copyright (c) Kotone <git@ktn.works>
 
 -- WebHookテーブルに作成者情報を追加
 ALTER TABLE guild_webhooks ADD COLUMN created_by TEXT;
