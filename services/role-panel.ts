@@ -10,13 +10,7 @@ import { getRolePanelByMessage, getRolePanelRoles, getRolePanelById } from './db
 import { logger } from './logger.js';
 import { t } from './i18n.js';
 
-let handlersInitialized = false;
-
 export function setupRolePanelHandlers(client: Client) {
-    if (handlersInitialized) {
-        return; // 既に初期化済み
-    }
-    
     logger.info('Setting up role panel handlers...');
     
     client.on('messageReactionAdd', async (reaction: MessageReaction | PartialMessageReaction, user: User | PartialUser) => {
@@ -26,8 +20,6 @@ export function setupRolePanelHandlers(client: Client) {
     client.on('messageReactionRemove', async (reaction: MessageReaction | PartialMessageReaction, user: User | PartialUser) => {
         await handleReactionChange(reaction, user, 'remove');
     });
-    
-    handlersInitialized = true;
 }
 
 async function handleReactionChange(reaction: MessageReaction | PartialMessageReaction, user: User | PartialUser, action: 'add' | 'remove') {

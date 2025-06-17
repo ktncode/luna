@@ -11,6 +11,7 @@ import { loadCommands } from './services/command.js';
 import { initializeDatabase } from './services/db.js';
 import { createWebhookServer } from './services/webhook.js';
 import { logger } from './services/logger.js';
+import { setupRolePanelHandlers } from './services/role-panel.js';
 
 dotenv.config();
 
@@ -66,6 +67,9 @@ async function main() {
 // Bot initialization
 client.once('ready', async () => {
   logger.info(`Logged in as ${client.user?.tag}!`);
+  
+  // 役職パネルハンドラーを設定
+  setupRolePanelHandlers(client);
   
   // WebHookサーバーを初期化して起動
   const webhookServer = createWebhookServer(client);

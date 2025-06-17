@@ -26,7 +26,7 @@ import {
     getRolePanelRoles
 } from '../services/db.js';
 import { logger } from '../services/logger.js';
-import { setupRolePanelHandlers, updateRolePanelMessage } from '../services/role-panel.js';
+import { updateRolePanelMessage } from '../services/role-panel.js';
 
 export default {
     data: new SlashCommandBuilder()
@@ -150,10 +150,6 @@ export default {
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
 
     async execute(interaction: ChatInputCommandInteraction) {
-        // 毎回ハンドラーを設定（重複登録は問題なし）
-        setupRolePanelHandlers(interaction.client);
-        logger.info('Role panel handlers initialized');
-
         if (!interaction.guild) {
             await interaction.reply({
                 content: tCmd(interaction, 'errors.command_error'),
