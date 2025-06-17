@@ -197,7 +197,11 @@ commands:
     redirected: "Redirect Detected"
     redirect_warning: "Original URL: {original}\nFinal URL: {final}\n\n⚠️ This URL redirects to another site."
     security_warning: "Security Warning"
+    status_0_info: "SecURL analysis completed successfully. If no viruses or blacklist entries are detected, this URL is considered safe."
     status_590_desc: "This URL failed security checks. It may be a phishing or malicious site."
+    analyzed: "Analysis Complete"
+    analysis_info: "Analysis Information"
+    status_590_info: "Status 590 indicates that SecURL's detailed analysis is complete. This status itself does not indicate danger."
 
 errors:
   command_error: "There was an error while executing this command!"

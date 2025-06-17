@@ -133,18 +133,26 @@ export default {
         try {
             logger.info(`Checking URL safety: ${url}`);
             const data = await checkURL(url);
+            
+            // デバッグ用：レスポンスデータをログ出力
+            logger.info('SecURL response data:', JSON.stringify(data, null, 2));
 
             // 結果の解析
             const hasViruses = data.viruses && data.viruses.length > 0;
             const isBlacklisted = data.blackList && data.blackList.length > 0;
             const isRedirected = data.resURL && data.resURL !== url;
-            const isSuspiciousStatus = data.status && (data.status >= 400 || data.status === 590);
+            
+            // HARファイルから判明：status: 0 が正常、590は実際には出ていない
+            const isSuspiciousStatus = data.status && data.status >= 400;
             const isUnsafe = hasViruses || isBlacklisted || isSuspiciousStatus;
 
-            // ステータスコードの解釈
+            // ステータスコードの解釈を修正
             let statusText = 'N/A';
-            if (data.status) {
+            if (data.status !== undefined) {
                 switch (data.status) {
+                    case 0:
+                        statusText = `${data.status} (Analysis Complete)`;
+                        break;
                     case 200:
                         statusText = `${data.status} (OK)`;
                         break;
@@ -206,7 +214,16 @@ export default {
                 });
             }
 
-            // ステータス590の場合の説明
+            // ステータス0の場合の説明を追加
+            if (data.status === 0) {
+                resultEmbed.addFields({
+                    name: 'ℹ️ ' + tCmd(interaction, 'commands.checkurl.analysis_info'),
+                    value: tCmd(interaction, 'commands.checkurl.status_0_info'),
+                    inline: false
+                });
+            }
+
+            // ステータス590の場合の説明（実際にはほとんど発生しない）
             if (data.status === 590) {
                 resultEmbed.addFields({
                     name: '⚠️ ' + tCmd(interaction, 'commands.checkurl.security_warning'),
