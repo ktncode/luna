@@ -176,6 +176,25 @@ commands:
       failed: "役職パネルの削除に失敗しました。"
       not_found: "指定されたパネルが見つかりません。"
 
+  checkurl:
+    description: "URLが安全かどうかをチェックします"
+    invalid_url: "無効なURL"
+    invalid_url_desc: "正しいURL形式で入力してください。"
+    checking: "URLをチェック中"
+    checking_desc: "URL「{url}」の安全性をチェックしています..."
+    safe: "安全なURL"
+    unsafe: "危険なURL"
+    result_desc: "URL「{url}」のチェック結果"
+    status: "ステータス"
+    title: "ページタイトル"
+    final_url: "最終URL"
+    viruses_detected: "ウイルス検出"
+    blacklisted: "ブラックリスト"
+    captured_at: "キャプチャ日時"
+    error: "チェックエラー"
+    error_desc: "URLのチェック中にエラーが発生しました。"
+    error_details: "エラー詳細"
+
 errors:
   command_error: "このコマンドの実行中にエラーが発生しました！"
   unknown_command: "コマンド {command} が見つかりません。"

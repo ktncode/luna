@@ -176,6 +176,25 @@ commands:
       failed: "Failed to delete role panel."
       not_found: "Specified panel not found."
 
+  checkurl:
+    description: "Check if a URL is safe"
+    invalid_url: "Invalid URL"
+    invalid_url_desc: "Please enter a valid URL format."
+    checking: "Checking URL"
+    checking_desc: "Checking the safety of URL \"{url}\"..."
+    safe: "Safe URL"
+    unsafe: "Unsafe URL"
+    result_desc: "Check result for URL \"{url}\""
+    status: "Status"
+    title: "Page Title"
+    final_url: "Final URL"
+    viruses_detected: "Viruses Detected"
+    blacklisted: "Blacklisted"
+    captured_at: "Captured At"
+    error: "Check Error"
+    error_desc: "An error occurred while checking the URL."
+    error_details: "Error Details"
+
 errors:
   command_error: "There was an error while executing this command!"
   unknown_command: "No command matching {command} was found."
