@@ -194,6 +194,10 @@ commands:
     error: "チェックエラー"
     error_desc: "URLのチェック中にエラーが発生しました。"
     error_details: "エラー詳細"
+    redirected: "リダイレクト検出"
+    redirect_warning: "元のURL: {original}\n最終URL: {final}\n\n⚠️ このURLは別のサイトにリダイレクトされます。"
+    security_warning: "セキュリティ警告"
+    status_590_desc: "このURLはセキュリティチェックに失敗しました。フィッシングサイトや悪意のあるサイトの可能性があります。"
 
 errors:
   command_error: "このコマンドの実行中にエラーが発生しました！"

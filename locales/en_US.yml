@@ -194,6 +194,10 @@ commands:
     error: "Check Error"
     error_desc: "An error occurred while checking the URL."
     error_details: "Error Details"
+    redirected: "Redirect Detected"
+    redirect_warning: "Original URL: {original}\nFinal URL: {final}\n\n⚠️ This URL redirects to another site."
+    security_warning: "Security Warning"
+    status_590_desc: "This URL failed security checks. It may be a phishing or malicious site."
 
 errors:
   command_error: "There was an error while executing this command!"

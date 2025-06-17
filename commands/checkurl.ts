@@ -137,7 +137,34 @@ export default {
             // 結果の解析
             const hasViruses = data.viruses && data.viruses.length > 0;
             const isBlacklisted = data.blackList && data.blackList.length > 0;
-            const isUnsafe = hasViruses || isBlacklisted;
+            const isRedirected = data.resURL && data.resURL !== url;
+            const isSuspiciousStatus = data.status && (data.status >= 400 || data.status === 590);
+            const isUnsafe = hasViruses || isBlacklisted || isSuspiciousStatus;
+
+            // ステータスコードの解釈
+            let statusText = 'N/A';
+            if (data.status) {
+                switch (data.status) {
+                    case 200:
+                        statusText = `${data.status} (OK)`;
+                        break;
+                    case 301:
+                    case 302:
+                        statusText = `${data.status} (Redirect)`;
+                        break;
+                    case 404:
+                        statusText = `${data.status} (Not Found)`;
+                        break;
+                    case 500:
+                        statusText = `${data.status} (Server Error)`;
+                        break;
+                    case 590:
+                        statusText = `${data.status} (Security Check Failed)`;
+                        break;
+                    default:
+                        statusText = data.status.toString();
+                }
+            }
 
             // 結果Embed作成
             const resultEmbed = new EmbedBuilder()
@@ -149,22 +176,44 @@ export default {
                 .addFields(
                     {
                         name: tCmd(interaction, 'commands.checkurl.status'),
-                        value: data.status ? data.status.toString() : 'N/A',
+                        value: statusText,
                         inline: true
                     },
                     {
                         name: tCmd(interaction, 'commands.checkurl.title'),
                         value: data.title || 'N/A',
                         inline: true
-                    },
-                    {
-                        name: tCmd(interaction, 'commands.checkurl.final_url'),
-                        value: data.resURL || url,
-                        inline: false
                     }
                 )
                 .setFooter({ text: 'Powered By Securl' })
                 .setTimestamp();
+
+            // リダイレクトされた場合の警告
+            if (isRedirected) {
+                resultEmbed.addFields({
+                    name: '🔄 ' + tCmd(interaction, 'commands.checkurl.redirected'),
+                    value: tCmd(interaction, 'commands.checkurl.redirect_warning', { 
+                        original: url, 
+                        final: data.resURL || 'Unknown'
+                    }),
+                    inline: false
+                });
+            } else {
+                resultEmbed.addFields({
+                    name: tCmd(interaction, 'commands.checkurl.final_url'),
+                    value: data.resURL || url,
+                    inline: false
+                });
+            }
+
+            // ステータス590の場合の説明
+            if (data.status === 590) {
+                resultEmbed.addFields({
+                    name: '⚠️ ' + tCmd(interaction, 'commands.checkurl.security_warning'),
+                    value: tCmd(interaction, 'commands.checkurl.status_590_desc'),
+                    inline: false
+                });
+            }
 
             // ウイルス検出があれば追加
             if (hasViruses && data.viruses) {
