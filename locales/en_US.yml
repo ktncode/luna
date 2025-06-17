@@ -153,13 +153,18 @@ commands:
   role_panel:
     description: "Manage role assignment panels"
     footer: "Click emoji to get roles"
-    no_permission: "You need Manage Roles permission to use this feature."
+    available_roles: "Available Roles"
+    no_roles_configured: "No roles configured. Use `/role-panel add-role` command to add roles."
+    role_added_notification: "{user} Added role \"{role}\"."
+    role_removed_notification: "{user} Removed role \"{role}\"."
     create:
       success: "Role panel \"{title}\" created!"
       failed: "Failed to create role panel. A panel with the same name may already exist."
     add_role:
       success: "Added role \"{role}\" to panel \"{panel}\"."
+      success_multiple: "Added {count} roles ({roles}) to panel \"{panel}\"."
       failed: "Failed to add role."
+      no_roles: "Please specify roles to add."
       panel_not_found: "Specified panel not found."
       max_roles: "Maximum 10 roles can be added to one panel."
     list:

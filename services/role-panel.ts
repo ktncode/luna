@@ -8,6 +8,7 @@
 import { Client, MessageReaction, PartialMessageReaction, User, PartialUser, GuildMember, EmbedBuilder } from 'discord.js';
 import { getRolePanelByMessage, getRolePanelRoles, getRolePanelById } from './db.js';
 import { logger } from './logger.js';
+import { t } from './i18n.js';
 
 export function setupRolePanelHandlers(client: Client) {
     logger.info('Setting up role panel handlers...');
@@ -73,11 +74,65 @@ async function handleReactionChange(reaction: MessageReaction | PartialMessageRe
             if (!member.roles.cache.has(role.id)) {
                 await member.roles.add(role);
                 logger.info(`Added role ${role.name} to user ${user.tag} in guild ${guild.name}`);
+                
+                // チャンネルで通知
+                try {
+                    const guildLocale = guild.preferredLocale || 'en-US';
+                    const notificationContent = t(guild.id, guildLocale, 'commands.role_panel.role_added_notification', {
+                        user: `<@${user.id}>`,
+                        role: role.name
+                    });
+                    
+                    const channel = reaction.message.channel;
+                    if (channel && channel.isTextBased() && 'send' in channel) {
+                        const notificationMessage = await channel.send({
+                            content: notificationContent
+                        });
+                        
+                        // 5秒後に削除
+                        setTimeout(async () => {
+                            try {
+                                await notificationMessage.delete();
+                            } catch (error) {
+                                // メッセージ削除エラーは無視
+                            }
+                        }, 5000);
+                    }
+                } catch (error) {
+                    // 通知送信失敗は無視
+                }
             }
         } else {
             if (member.roles.cache.has(role.id)) {
                 await member.roles.remove(role);
                 logger.info(`Removed role ${role.name} from user ${user.tag} in guild ${guild.name}`);
+                
+                // チャンネルで通知
+                try {
+                    const guildLocale = guild.preferredLocale || 'en-US';
+                    const notificationContent = t(guild.id, guildLocale, 'commands.role_panel.role_removed_notification', {
+                        user: `<@${user.id}>`,
+                        role: role.name
+                    });
+                    
+                    const channel = reaction.message.channel;
+                    if (channel && channel.isTextBased() && 'send' in channel) {
+                        const notificationMessage = await channel.send({
+                            content: notificationContent
+                        });
+                        
+                        // 5秒後に削除
+                        setTimeout(async () => {
+                            try {
+                                await notificationMessage.delete();
+                            } catch (error) {
+                                // メッセージ削除エラーは無視
+                            }
+                        }, 5000);
+                    }
+                } catch (error) {
+                    // 通知送信失敗は無視
+                }
             }
         }
 
@@ -96,11 +151,15 @@ export async function updateRolePanelMessage(client: Client, panelId: number) {
 
         const roles = await getRolePanelRoles(panelId);
         
+        // ギルドを取得してロケールを決定
+        const guild = await client.guilds.fetch(panel.guild_id);
+        const guildLocale = guild?.preferredLocale || 'en-US';
+        
         // Embedを再構築
         const embed = new EmbedBuilder()
             .setTitle(panel.title)
             .setColor(panel.color)
-            .setFooter({ text: '絵文字をクリックして役職を取得' });
+            .setFooter({ text: t(panel.guild_id, guildLocale, 'commands.role_panel.footer') });
 
         if (panel.description) {
             embed.setDescription(panel.description);
@@ -113,13 +172,13 @@ export async function updateRolePanelMessage(client: Client, panelId: number) {
             ).join('\n');
             
             embed.addFields({
-                name: '利用可能な役職',
+                name: t(panel.guild_id, guildLocale, 'commands.role_panel.available_roles'),
                 value: roleFields
             });
         } else {
             embed.addFields({
-                name: '利用可能な役職',
-                value: '役職が設定されていません。`/role-panel add-role` コマンドで役職を追加してください。'
+                name: t(panel.guild_id, guildLocale, 'commands.role_panel.available_roles'),
+                value: t(panel.guild_id, guildLocale, 'commands.role_panel.no_roles_configured')
             });
         }
 

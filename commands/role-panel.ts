@@ -72,15 +72,63 @@ export default {
                         .setRequired(true)
                 )
                 .addRoleOption(option =>
-                    option.setName('role')
+                    option.setName('role1')
                         .setDescription('Role to add')
-                        .setDescriptionLocalization('ja', '追加する役職')
+                        .setDescriptionLocalization('ja', '追加する役職1')
                         .setRequired(true)
                 )
-                .addStringOption(option =>
-                    option.setName('description')
-                        .setDescription('Role description')
-                        .setDescriptionLocalization('ja', '役職の説明')
+                .addRoleOption(option =>
+                    option.setName('role2')
+                        .setDescription('Role to add (optional)')
+                        .setDescriptionLocalization('ja', '追加する役職2（任意）')
+                        .setRequired(false)
+                )
+                .addRoleOption(option =>
+                    option.setName('role3')
+                        .setDescription('Role to add (optional)')
+                        .setDescriptionLocalization('ja', '追加する役職3（任意）')
+                        .setRequired(false)
+                )
+                .addRoleOption(option =>
+                    option.setName('role4')
+                        .setDescription('Role to add (optional)')
+                        .setDescriptionLocalization('ja', '追加する役職4（任意）')
+                        .setRequired(false)
+                )
+                .addRoleOption(option =>
+                    option.setName('role5')
+                        .setDescription('Role to add (optional)')
+                        .setDescriptionLocalization('ja', '追加する役職5（任意）')
+                        .setRequired(false)
+                )
+                .addRoleOption(option =>
+                    option.setName('role6')
+                        .setDescription('Role to add (optional)')
+                        .setDescriptionLocalization('ja', '追加する役職6（任意）')
+                        .setRequired(false)
+                )
+                .addRoleOption(option =>
+                    option.setName('role7')
+                        .setDescription('Role to add (optional)')
+                        .setDescriptionLocalization('ja', '追加する役職7（任意）')
+                        .setRequired(false)
+                )
+                .addRoleOption(option =>
+                    option.setName('role8')
+                        .setDescription('Role to add (optional)')
+                        .setDescriptionLocalization('ja', '追加する役職8（任意）')
+                        .setRequired(false)
+                )
+                .addRoleOption(option =>
+                    option.setName('role9')
+                        .setDescription('Role to add (optional)')
+                        .setDescriptionLocalization('ja', '追加する役職9（任意）')
+                        .setRequired(false)
+                )
+                .addRoleOption(option =>
+                    option.setName('role10')
+                        .setDescription('Role to add (optional)')
+                        .setDescriptionLocalization('ja', '追加する役職10（任意）')
                         .setRequired(false)
                 )
         )
@@ -198,7 +246,7 @@ async function handleCreatePanel(interaction: ChatInputCommandInteraction, guild
 
         if (panelId) {
             await interaction.followUp({
-                content: tCmd(interaction, 'commands.role_panel.create.success', { id: panelId }),
+                content: tCmd(interaction, 'commands.role_panel.create.success', { title: title }),
                 flags: 64
             });
         } else {
@@ -217,8 +265,6 @@ async function handleCreatePanel(interaction: ChatInputCommandInteraction, guild
 
 async function handleAddRole(interaction: ChatInputCommandInteraction, guildId: string) {
     const panelName = interaction.options.getString('panel_name', true);
-    const role = interaction.options.getRole('role', true);
-    const description = interaction.options.getString('description');
 
     // パネル名からパネルを取得
     const panels = await getGuildRolePanels(guildId);
@@ -232,11 +278,28 @@ async function handleAddRole(interaction: ChatInputCommandInteraction, guildId: 
         return;
     }
 
-    // 既存の役職数を取得して次の絵文字を決定
+    // 複数の役職を取得
+    const roles = [];
+    for (let i = 1; i <= 10; i++) {
+        const role = interaction.options.getRole(`role${i}`);
+        if (role) {
+            roles.push(role);
+        }
+    }
+
+    if (roles.length === 0) {
+        await interaction.reply({
+            content: tCmd(interaction, 'commands.role_panel.add_role.no_roles'),
+            flags: 64
+        });
+        return;
+    }
+
+    // 既存の役職数を取得
     const existingRoles = await getRolePanelRoles(panel.id);
     const numberEmojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
     
-    if (existingRoles.length >= numberEmojis.length) {
+    if (existingRoles.length + roles.length > numberEmojis.length) {
         await interaction.reply({
             content: tCmd(interaction, 'commands.role_panel.add_role.max_roles'),
             flags: 64
@@ -244,15 +307,26 @@ async function handleAddRole(interaction: ChatInputCommandInteraction, guildId: 
         return;
     }
 
-    const emoji = numberEmojis[existingRoles.length];
+    // 役職を順次追加
+    let successCount = 0;
+    const addedRoles = [];
 
-    // 役職をパネルに追加
-    const success = await addRoleToPanelId(panel.id, role.id, emoji, description);
+    for (let i = 0; i < roles.length; i++) {
+        const role = roles[i];
+        const emoji = numberEmojis[existingRoles.length + i];
+        
+        const success = await addRoleToPanelId(panel.id, role.id, emoji, null);
+        if (success) {
+            successCount++;
+            addedRoles.push(role.name);
+        }
+    }
 
-    if (success) {
+    if (successCount > 0) {
         await interaction.reply({
-            content: tCmd(interaction, 'commands.role_panel.add_role.success', { 
-                role: role.name, 
+            content: tCmd(interaction, 'commands.role_panel.add_role.success_multiple', { 
+                count: successCount,
+                roles: addedRoles.join(', '),
                 panel: panelName 
             }),
             flags: 64
