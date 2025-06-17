@@ -202,6 +202,8 @@ commands:
     analyzed: "Analysis Complete"
     analysis_info: "Analysis Information"
     status_590_info: "Status 590 indicates that SecURL's detailed analysis is complete. This status itself does not indicate danger."
+    anchors_found: "Links Detected"
+    anchors_count: "{count} links found"
 
 errors:
   command_error: "There was an error while executing this command!"

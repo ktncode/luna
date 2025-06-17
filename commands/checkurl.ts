@@ -13,10 +13,17 @@ interface SecURLData {
     status?: number;
     imgWidth?: number;
     imgHeight?: number;
-    reqURL?: string;
-    resURL?: string;
+    reqUrl?: string;  // reqURL -> reqUrl
+    resUrl?: string;  // resURL -> resUrl
     title?: string;
-    anchors?: string[];
+    anchors?: Array<{
+        url: string;
+        text: string;
+        x: number;
+        y: number;
+        w: number;
+        h: number;
+    }>;
     viruses?: string[];
     blackList?: string[];
     annoyUrl?: string;
@@ -140,9 +147,9 @@ export default {
             // 結果の解析
             const hasViruses = data.viruses && data.viruses.length > 0;
             const isBlacklisted = data.blackList && data.blackList.length > 0;
-            const isRedirected = data.resURL && data.resURL !== url;
+            const isRedirected = data.resUrl && data.resUrl !== url;
             
-            // HARファイルから判明：status: 0 が正常、590は実際には出ていない
+            // HARファイルから判明：status: 0 が正常
             const isSuspiciousStatus = data.status && data.status >= 400;
             const isUnsafe = hasViruses || isBlacklisted || isSuspiciousStatus;
 
@@ -202,14 +209,14 @@ export default {
                     name: '🔄 ' + tCmd(interaction, 'commands.checkurl.redirected'),
                     value: tCmd(interaction, 'commands.checkurl.redirect_warning', { 
                         original: url, 
-                        final: data.resURL || 'Unknown'
+                        final: data.resUrl || 'Unknown'
                     }),
                     inline: false
                 });
             } else {
                 resultEmbed.addFields({
                     name: tCmd(interaction, 'commands.checkurl.final_url'),
-                    value: data.resURL || url,
+                    value: data.resUrl || url,
                     inline: false
                 });
             }
@@ -257,6 +264,16 @@ export default {
                 resultEmbed.addFields({
                     name: tCmd(interaction, 'commands.checkurl.captured_at'),
                     value: data.capturedDate || 'Unknown',
+                    inline: true
+                });
+            }
+
+            // アンカー情報があれば追加（デバッグ用）
+            if (data.anchors && data.anchors.length > 0) {
+                const anchorCount = data.anchors.length;
+                resultEmbed.addFields({
+                    name: '🔗 ' + tCmd(interaction, 'commands.checkurl.anchors_found'),
+                    value: tCmd(interaction, 'commands.checkurl.anchors_count', { count: anchorCount }),
                     inline: true
                 });
             }
