@@ -27,14 +27,27 @@ class Logger {
         // Skip logger internal calls and find the actual caller
         for (let i = 3; i < stackLines.length; i++) {
             const line = stackLines[i];
-            if (line.includes('file://') && !line.includes('logger.')) {
-                const match = line.match(/file:\/\/(.+):(\d+):(\d+)/);
-                if (match) {
-                    const fullPath = match[1];
-                    const fileName = path.basename(fullPath);
-                    const lineNumber = match[2];
-                    return `${fileName}:${lineNumber}`;
-                }
+            
+            // Node.js ESモジュールのパスパターンを検出
+            let match = line.match(/at .* \(file:\/\/(.+):(\d+):(\d+)\)/);
+            if (!match) {
+                // 別のパターンも試す
+                match = line.match(/at file:\/\/(.+):(\d+):(\d+)/);
+            }
+            if (!match) {
+                // CommonJSスタイルのパスも試す
+                match = line.match(/at .* \((.+\.(?:ts|js)):(\d+):(\d+)\)/);
+            }
+            if (!match) {
+                // より一般的なパターン
+                match = line.match(/at (.+\.(?:ts|js)):(\d+):(\d+)/);
+            }
+            
+            if (match && !match[1].includes('logger.') && !match[1].includes('node_modules')) {
+                const fullPath = match[1].replace('file://', '');
+                const fileName = path.basename(fullPath);
+                const lineNumber = match[2];
+                return `${fileName}:${lineNumber}`;
             }
         }
         return 'unknown';
