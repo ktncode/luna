@@ -62,11 +62,30 @@ async function checkURL(
         'from': ''
     });
 
-    const response = await fetch('https://securl.nu/jx/get_page_jx.php', {
+    // プロキシ設定を確認
+    const proxyUrl = process.env.HTTP_PROXY || process.env.HTTPS_PROXY || process.env.http_proxy || process.env.https_proxy;
+    
+    let fetchOptions: RequestInit = {
         method: 'POST',
         headers: HEADERS,
         body: formData
-    });
+    };
+
+    // プロキシが設定されている場合、undiciのProxyAgentを使用
+    if (proxyUrl) {
+        logger.info(`Using proxy: ${proxyUrl.replace(/\/\/.*:.*@/, '//***:***@')}`); // パスワードをマスク
+        
+        // undiciのProxyAgentを動的にインポート
+        try {
+            const { ProxyAgent, setGlobalDispatcher } = await import('undici');
+            const proxyAgent = new ProxyAgent(proxyUrl);
+            setGlobalDispatcher(proxyAgent);
+        } catch (error) {
+            logger.warn('Failed to set up proxy agent:', error);
+        }
+    }
+
+    const response = await fetch('https://securl.nu/jx/get_page_jx.php', fetchOptions);
 
     if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -146,9 +165,11 @@ export default {
             const isBlacklisted = data.blackList && data.blackList.length > 0;
             const isRedirected = data.resUrl && data.resUrl !== url;
             
-            // HARファイルから判明：status: 0 が正常
-            const isSuspiciousStatus = data.status && data.status >= 400;
+            // エラーステータスは危険ではなく、単に取得失敗として扱う
+            const isErrorStatus = data.status === 590 || data.status === 930;
+            const isSuspiciousStatus = data.status && data.status >= 400 && !isErrorStatus;
             const isUnsafe = hasViruses || isBlacklisted || isSuspiciousStatus;
+            // エラーステータスは危険とは判定しない
 
             // ステータスコードの解釈を修正
             let statusText = 'N/A';
@@ -173,17 +194,22 @@ export default {
                     case 590:
                         statusText = `${data.status} (Security Check Failed)`;
                         break;
+                    case 930:
+                        statusText = `${data.status} (Analysis Error)`;
+                        break;
                     default:
                         statusText = data.status.toString();
                 }
             }
 
-            // 結果Embed作成
+            // 結果Embed作成 - エラーステータスは警告色にする
             const resultEmbed = new EmbedBuilder()
-                .setColor(isUnsafe ? 0xff0000 : 0x00ff00)
+                .setColor(isUnsafe ? 0xff0000 : (isErrorStatus ? 0xffa500 : 0x00ff00))
                 .setTitle(isUnsafe ? 
                     '⚠️ ' + tCmd(interaction, 'commands.checkurl.unsafe') : 
-                    '✅ ' + tCmd(interaction, 'commands.checkurl.safe'))
+                    (isErrorStatus ? 
+                        '❌ ' + tCmd(interaction, 'commands.checkurl.could_not_fetch') :
+                        '✅ ' + tCmd(interaction, 'commands.checkurl.safe')))
                 .setDescription(tCmd(interaction, 'commands.checkurl.result_desc', { url: `\`${url}\`` }))
                 .addFields(
                     {
@@ -227,11 +253,20 @@ export default {
                 });
             }
 
-            // ステータス590の場合の説明（実際にはほとんど発生しない）
+            // ステータス590の場合の説明
             if (data.status === 590) {
                 resultEmbed.addFields({
-                    name: '⚠️ ' + tCmd(interaction, 'commands.checkurl.security_warning'),
+                    name: 'ℹ️ ' + tCmd(interaction, 'commands.checkurl.fetch_info'),
                     value: tCmd(interaction, 'commands.checkurl.status_590_desc'),
+                    inline: false
+                });
+            }
+
+            // ステータス930の場合の説明
+            if (data.status === 930) {
+                resultEmbed.addFields({
+                    name: 'ℹ️ ' + tCmd(interaction, 'commands.checkurl.fetch_info'),
+                    value: tCmd(interaction, 'commands.checkurl.status_930_desc'),
                     inline: false
                 });
             }
