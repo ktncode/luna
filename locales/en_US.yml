@@ -150,6 +150,24 @@ commands:
         delete_failed: Failed to delete cross-server webhook.
         permission_denied: You don't have permission to delete this cross-server webhook. Creator or administrator permission required.
 
+  role_panel:
+    description: "Manage role assignment panels"
+    footer: "Click emoji to get roles"
+    create:
+      success: "Role panel created! Panel ID: {id}"
+      failed: "Failed to create role panel."
+    add_role:
+      success: "Added role \"{role}\" to panel {panel}."
+      failed: "Failed to add role."
+      invalid_emoji: "Invalid emoji. Please provide a valid emoji."
+    list:
+      empty: "No role panels created."
+      title: "**Role Panels**"
+      item: "ID: {id} | Title: {title}\nChannel: {channel} | Created: {created}"
+    delete:
+      success: "Role panel deleted successfully."
+      failed: "Failed to delete role panel."
+
 errors:
   command_error: "There was an error while executing this command!"
   unknown_command: "No command matching {command} was found."

@@ -150,6 +150,24 @@ commands:
         delete_failed: クロスサーバーWebHookの削除に失敗しました。
         permission_denied: クロスサーバーWebHookを削除する権限がありません。作成者または管理者権限が必要です。
 
+  role_panel:
+    description: "役職パネルを管理します"
+    footer: "絵文字をクリックして役職を取得"
+    create:
+      success: "役職パネルを作成しました！パネルID: {id}"
+      failed: "役職パネルの作成に失敗しました。"
+    add_role:
+      success: "役職「{role}」をパネル {panel} に追加しました。"
+      failed: "役職の追加に失敗しました。"
+      invalid_emoji: "無効な絵文字です。有効な絵文字を指定してください。"
+    list:
+      empty: "役職パネルが作成されていません。"
+      title: "**役職パネル一覧**"
+      item: "ID: {id} | タイトル: {title}\nチャンネル: {channel} | 作成日: {created}"
+    delete:
+      success: "役職パネルを削除しました。"
+      failed: "役職パネルの削除に失敗しました。"
+
 errors:
   command_error: "このコマンドの実行中にエラーが発生しました！"
   unknown_command: "コマンド {command} が見つかりません。"

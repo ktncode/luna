@@ -771,3 +771,195 @@ export async function getCrossServerWebhooks(guildId: string): Promise<CrossServ
         return [];
     }
 }
+
+// 役職パネル関連のインターフェース
+export interface RolePanel {
+    id: number;
+    guild_id: string;
+    channel_id: string;
+    message_id: string;
+    title: string;
+    description?: string;
+    color: number;
+    created_by: string;
+    created_at: string;
+    updated_at: string;
+    enabled: boolean;
+}
+
+export interface RolePanelRole {
+    id: number;
+    panel_id: number;
+    role_id: string;
+    emoji: string;
+    description?: string;
+    created_at: string;
+}
+
+// 役職パネルの作成
+export async function createRolePanel(
+    guildId: string,
+    channelId: string,
+    messageId: string,
+    title: string,
+    description: string | null,
+    color: number,
+    userId: string
+): Promise<number | null> {
+    try {
+        const dbm = DBManager.getInstance();
+        
+        const stmt = db.prepare(`
+            INSERT INTO role_panels (guild_id, channel_id, message_id, title, description, color, created_by)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `);
+        
+        const result = stmt.run(guildId, channelId, messageId, title, description, color, userId);
+        return result.lastInsertRowid as number;
+    } catch (error) {
+        logger.error('Error creating role panel:', error);
+        return null;
+    }
+}
+
+// 役職パネルにロールを追加
+export async function addRoleToPanelId(
+    panelId: number,
+    roleId: string,
+    emoji: string,
+    description: string | null
+): Promise<boolean> {
+    try {
+        const dbm = DBManager.getInstance();
+        
+        return dbm.insert('role_panel_roles', {
+            panel_id: panelId,
+            role_id: roleId,
+            emoji: emoji,
+            description: description
+        });
+    } catch (error) {
+        logger.error('Error adding role to panel:', error);
+        return false;
+    }
+}
+
+// メッセージIDから役職パネルを取得
+export async function getRolePanelByMessage(messageId: string): Promise<RolePanel | null> {
+    try {
+        const dbm = DBManager.getInstance();
+        const result = dbm.query(
+            'SELECT * FROM role_panels WHERE message_id = ? AND enabled = 1 LIMIT 1',
+            [messageId]
+        );
+        return result[0] || null;
+    } catch (error) {
+        logger.error('Error getting role panel by message:', error);
+        return null;
+    }
+}
+
+// パネルIDから役職パネルを取得
+export async function getRolePanelById(panelId: number): Promise<RolePanel | null> {
+    try {
+        const dbm = DBManager.getInstance();
+        const result = dbm.query(
+            'SELECT * FROM role_panels WHERE id = ? AND enabled = 1 LIMIT 1',
+            [panelId]
+        );
+        return result[0] || null;
+    } catch (error) {
+        logger.error('Error getting role panel by id:', error);
+        return null;
+    }
+}
+
+// 絵文字から役職パネルのロールを検索
+export async function getRolePanelRoleByEmoji(panelId: number, emoji: string): Promise<RolePanelRole | null> {
+    try {
+        const dbm = DBManager.getInstance();
+        const result = dbm.query(
+            'SELECT * FROM role_panel_roles WHERE panel_id = ? AND emoji = ? LIMIT 1',
+            [panelId, emoji]
+        );
+        return result[0] || null;
+    } catch (error) {
+        logger.error('Error getting role panel role by emoji:', error);
+        return null;
+    }
+}
+
+// 役職パネルから特定のロールを削除
+export async function removeRoleFromPanel(panelId: number, roleId: string): Promise<boolean> {
+    try {
+        const dbm = DBManager.getInstance();
+        const stmt = db.prepare('DELETE FROM role_panel_roles WHERE panel_id = ? AND role_id = ?');
+        stmt.run(panelId, roleId);
+        return true;
+    } catch (error) {
+        logger.error('Error removing role from panel:', error);
+        return false;
+    }
+}
+
+// 役職パネルのロール一覧を取得
+export async function getRolePanelRoles(panelId: number): Promise<RolePanelRole[]> {
+    try {
+        const dbm = DBManager.getInstance();
+        return dbm.query(
+            'SELECT * FROM role_panel_roles WHERE panel_id = ? ORDER BY id ASC',
+            [panelId]
+        );
+    } catch (error) {
+        logger.error('Error getting role panel roles:', error);
+        return [];
+    }
+}
+
+// ギルドの役職パネル一覧を取得
+export async function getGuildRolePanels(guildId: string): Promise<RolePanel[]> {
+    try {
+        const dbm = DBManager.getInstance();
+        return dbm.query(
+            'SELECT * FROM role_panels WHERE guild_id = ? AND enabled = 1 ORDER BY created_at DESC',
+            [guildId]
+        );
+    } catch (error) {
+        logger.error('Error getting guild role panels:', error);
+        return [];
+    }
+}
+
+// 役職パネルの削除
+export async function deleteRolePanel(panelId: number, guildId: string, userId: string, hasAdministratorPermission: boolean): Promise<boolean> {
+    try {
+        const dbm = DBManager.getInstance();
+        
+        // 役職パネルの存在と作成者をチェック
+        const result = dbm.query(
+            'SELECT * FROM role_panels WHERE id = ? AND guild_id = ? AND enabled = 1 LIMIT 1',
+            [panelId, guildId]
+        );
+        
+        const panel = result[0] as RolePanel;
+        
+        if (!panel) {
+            logger.error(`Role panel not found: ${panelId}`);
+            return false;
+        }
+        
+        // 権限チェック：作成者またはAdministrator権限を持つユーザーのみ削除可能
+        if (panel.created_by !== userId && !hasAdministratorPermission) {
+            logger.error(`Insufficient permissions to delete role panel: user ${userId}, creator ${panel.created_by}`);
+            return false;
+        }
+        
+        const stmt = db.prepare('UPDATE role_panels SET enabled = 0 WHERE id = ? AND guild_id = ?');
+        stmt.run(panelId, guildId);
+        logger.info(`Role panel ${panelId} deleted successfully by user ${userId}`);
+        return true;
+    } catch (error) {
+        logger.error('Error deleting role panel:', error);
+        return false;
+    }
+}
