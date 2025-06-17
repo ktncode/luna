@@ -818,6 +818,17 @@ export async function createRolePanel(
     try {
         const dbm = DBManager.getInstance();
         
+        // 同じギルド内でのタイトル重複チェック
+        const existingPanel = dbm.query(
+            'SELECT * FROM role_panels WHERE guild_id = ? AND title = ? AND enabled = 1 LIMIT 1',
+            [guildId, title]
+        );
+        
+        if (existingPanel.length > 0) {
+            logger.warn(`Role panel with title "${title}" already exists in guild ${guildId}`);
+            return null;
+        }
+        
         const stmt = db.prepare(`
             INSERT INTO role_panels (guild_id, channel_id, message_id, title, description, color, created_by)
             VALUES (?, ?, ?, ?, ?, ?, ?)

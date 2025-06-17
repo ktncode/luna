@@ -65,22 +65,16 @@ export default {
                 .setName('add-role')
                 .setDescription('Add a role to an existing panel')
                 .setDescriptionLocalization('ja', '既存のパネルに役職を追加します')
-                .addIntegerOption(option =>
-                    option.setName('panel_id')
-                        .setDescription('Panel ID')
-                        .setDescriptionLocalization('ja', 'パネルID')
+                .addStringOption(option =>
+                    option.setName('panel_name')
+                        .setDescription('Panel name')
+                        .setDescriptionLocalization('ja', 'パネル名')
                         .setRequired(true)
                 )
                 .addRoleOption(option =>
                     option.setName('role')
                         .setDescription('Role to add')
                         .setDescriptionLocalization('ja', '追加する役職')
-                        .setRequired(true)
-                )
-                .addStringOption(option =>
-                    option.setName('emoji')
-                        .setDescription('Reaction emoji')
-                        .setDescriptionLocalization('ja', 'リアクション絵文字')
                         .setRequired(true)
                 )
                 .addStringOption(option =>
@@ -101,10 +95,10 @@ export default {
                 .setName('delete')
                 .setDescription('Delete a role panel')
                 .setDescriptionLocalization('ja', '役職パネルを削除します')
-                .addIntegerOption(option =>
-                    option.setName('panel_id')
-                        .setDescription('Panel ID to delete')
-                        .setDescriptionLocalization('ja', '削除するパネルID')
+                .addStringOption(option =>
+                    option.setName('panel_name')
+                        .setDescription('Panel name to delete')
+                        .setDescriptionLocalization('ja', '削除するパネル名')
                         .setRequired(true)
                 )
         )
@@ -121,6 +115,20 @@ export default {
         if (!interaction.guild) {
             await interaction.reply({
                 content: tCmd(interaction, 'errors.command_error'),
+                flags: 64
+            });
+            return;
+        }
+
+        // STAFF権限チェック
+        const member = interaction.member;
+        const hasStaffPermission = !!(member && typeof member.permissions !== 'string' && 
+            (member.permissions.has(PermissionFlagsBits.ManageRoles) || 
+             member.permissions.has(PermissionFlagsBits.Administrator)));
+
+        if (!hasStaffPermission) {
+            await interaction.reply({
+                content: tCmd(interaction, 'commands.role_panel.no_permission'),
                 flags: 64
             });
             return;
@@ -208,35 +216,50 @@ async function handleCreatePanel(interaction: ChatInputCommandInteraction, guild
 }
 
 async function handleAddRole(interaction: ChatInputCommandInteraction, guildId: string) {
-    const panelId = interaction.options.getInteger('panel_id', true);
+    const panelName = interaction.options.getString('panel_name', true);
     const role = interaction.options.getRole('role', true);
-    const emoji = interaction.options.getString('emoji', true);
     const description = interaction.options.getString('description');
 
-    // 絵文字の検証
-    const emojiRegex = /^(\p{Emoji}|\p{Emoji_Modifier}|\p{Emoji_Component}|\p{Emoji_Modifier_Base}|\p{Emoji_Presentation})+$/u;
-    if (!emojiRegex.test(emoji) && !emoji.match(/<a?:\w+:\d+>/)) {
+    // パネル名からパネルを取得
+    const panels = await getGuildRolePanels(guildId);
+    const panel = panels.find(p => p.title === panelName);
+    
+    if (!panel) {
         await interaction.reply({
-            content: tCmd(interaction, 'commands.role_panel.add_role.invalid_emoji'),
+            content: tCmd(interaction, 'commands.role_panel.add_role.panel_not_found'),
             flags: 64
         });
         return;
     }
 
+    // 既存の役職数を取得して次の絵文字を決定
+    const existingRoles = await getRolePanelRoles(panel.id);
+    const numberEmojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+    
+    if (existingRoles.length >= numberEmojis.length) {
+        await interaction.reply({
+            content: tCmd(interaction, 'commands.role_panel.add_role.max_roles'),
+            flags: 64
+        });
+        return;
+    }
+
+    const emoji = numberEmojis[existingRoles.length];
+
     // 役職をパネルに追加
-    const success = await addRoleToPanelId(panelId, role.id, emoji, description);
+    const success = await addRoleToPanelId(panel.id, role.id, emoji, description);
 
     if (success) {
         await interaction.reply({
             content: tCmd(interaction, 'commands.role_panel.add_role.success', { 
                 role: role.name, 
-                panel: panelId 
+                panel: panelName 
             }),
             flags: 64
         });
         
         // パネルを更新
-        await updateRolePanelMessage(interaction.client, panelId);
+        await updateRolePanelMessage(interaction.client, panel.id);
     } else {
         await interaction.reply({
             content: tCmd(interaction, 'commands.role_panel.add_role.failed'),
@@ -272,13 +295,25 @@ async function handleListPanels(interaction: ChatInputCommandInteraction, guildI
 }
 
 async function handleDeletePanel(interaction: ChatInputCommandInteraction, guildId: string) {
-    const panelId = interaction.options.getInteger('panel_id', true);
+    const panelName = interaction.options.getString('panel_name', true);
     
+    // パネル名からパネルを取得
+    const panels = await getGuildRolePanels(guildId);
+    const panel = panels.find(p => p.title === panelName);
+    
+    if (!panel) {
+        await interaction.reply({
+            content: tCmd(interaction, 'commands.role_panel.delete.not_found'),
+            flags: 64
+        });
+        return;
+    }
+
     const member = interaction.member;
     const hasAdministratorPermission = !!(member && typeof member.permissions !== 'string' && 
         member.permissions.has(PermissionFlagsBits.Administrator));
 
-    const success = await deleteRolePanel(panelId, guildId, interaction.user.id, hasAdministratorPermission);
+    const success = await deleteRolePanel(panel.id, guildId, interaction.user.id, hasAdministratorPermission);
 
     if (success) {
         await interaction.reply({
