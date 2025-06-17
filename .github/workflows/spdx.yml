@@ -1,0 +1,123 @@
+# SPDX-License-Identifier: MPL-2.0
+# This Source Code Form is subject to the terms of the Mozilla Public License v2.0
+# Copyright (c) Kotone <git@ktn.works>
+
+name: SPDX License Check
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'commands/**'
+      - 'services/**'
+      - 'index.ts'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'commands/**'
+      - 'services/**'
+      - 'index.ts'
+
+jobs:
+  spdx-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check SPDX License Headers
+      run: |
+        # SPDX識別子をチェックする関数
+        check_spdx() {
+          local file="$1"
+          local has_spdx=false
+          local has_copyright=false
+          
+          # ファイルの最初の10行をチェック
+          head -n 10 "$file" | while IFS= read -r line; do
+            if [[ "$line" == *"SPDX-License-Identifier:"* ]]; then
+              has_spdx=true
+            fi
+            if [[ "$line" == *"Copyright (c) Kotone <git@ktn.works>"* ]]; then
+              has_copyright=true
+            fi
+          done
+          
+          # SPDXとコピーライトの両方をチェック
+          if ! head -n 10 "$file" | grep -q "SPDX-License-Identifier:"; then
+            echo "❌ Missing SPDX license identifier: $file"
+            return 1
+          fi
+          
+          if ! head -n 10 "$file" | grep -q "Copyright (c) Kotone <git@ktn.works>"; then
+            echo "❌ Missing copyright notice: $file"
+            return 1
+          fi
+          
+          echo "✅ Valid license header: $file"
+          return 0
+        }
+        
+        # 結果を追跡
+        exit_code=0
+        
+        echo "🔍 Checking SPDX license headers in commands and services directories..."
+        echo
+        
+        # index.ts をチェック
+        if [ -f "index.ts" ]; then
+          echo "📁 Checking root directory:"
+          if ! check_spdx "index.ts"; then
+            exit_code=1
+          fi
+          echo
+        fi
+        
+        # commands ディレクトリをチェック
+        if [ -d "commands" ]; then
+          echo "📁 Checking commands directory:"
+          for file in commands/*.ts commands/*.js; do
+            if [ -f "$file" ]; then
+              if ! check_spdx "$file"; then
+                exit_code=1
+              fi
+            fi
+          done
+          echo
+        fi
+        
+        # services ディレクトリをチェック
+        if [ -d "services" ]; then
+          echo "📁 Checking services directory:"
+          for file in services/*.ts services/*.js services/**/*.ts services/**/*.js services/**/*.sql; do
+            if [ -f "$file" ]; then
+              if ! check_spdx "$file"; then
+                exit_code=1
+              fi
+            fi
+          done
+          echo
+        fi
+        
+        # 結果の表示
+        if [ $exit_code -eq 0 ]; then
+          echo "🎉 All files have valid SPDX license headers!"
+        else
+          echo "💥 Some files are missing SPDX license headers or copyright notices."
+          echo
+          echo "Required format for TypeScript/JavaScript files:"
+          echo "/* This Source Code Form is subject to the terms of the Mozilla Public"
+          echo " * License, v. 2.0. If a copy of the MPL was not distributed with this"
+          echo " * file, You can obtain one at http://mozilla.org/MPL/2.0/."
+          echo " * SPDX-License-Identifier: MPL-2.0"
+          echo " * Copyright (c) Kotone <git@ktn.works>"
+          echo " */"
+          echo
+          echo "Required format for SQL files:"
+          echo "-- SPDX-License-Identifier: MPL-2.0"
+          echo "-- This Source Code Form is subject to the terms of the Mozilla Public License v2.0"
+          echo "-- Copyright (c) Kotone <git@ktn.works>"
+        fi
+        
+        exit $exit_code
