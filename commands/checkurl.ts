@@ -130,7 +130,7 @@ export default {
         const loadingEmbed = new EmbedBuilder()
             .setColor(0xffff00)
             .setTitle('🔍 ' + tCmd(interaction, 'commands.checkurl.checking'))
-            .setDescription(tCmd(interaction, 'commands.checkurl.checking_desc', { url }))
+            .setDescription(tCmd(interaction, 'commands.checkurl.checking_desc', { url: `\`${url}\`` }))
             .setTimestamp();
 
         await interaction.reply({
@@ -184,7 +184,7 @@ export default {
                 .setTitle(isUnsafe ? 
                     '⚠️ ' + tCmd(interaction, 'commands.checkurl.unsafe') : 
                     '✅ ' + tCmd(interaction, 'commands.checkurl.safe'))
-                .setDescription(tCmd(interaction, 'commands.checkurl.result_desc', { url }))
+                .setDescription(tCmd(interaction, 'commands.checkurl.result_desc', { url: `\`${url}\`` }))
                 .addFields(
                     {
                         name: tCmd(interaction, 'commands.checkurl.status'),
@@ -205,15 +205,15 @@ export default {
                 resultEmbed.addFields({
                     name: '🔄 ' + tCmd(interaction, 'commands.checkurl.redirected'),
                     value: tCmd(interaction, 'commands.checkurl.redirect_warning', { 
-                        original: url, 
-                        final: data.resUrl || 'Unknown'
+                        original: `\`${url}\``, 
+                        final: `\`${data.resUrl}\``
                     }),
                     inline: false
                 });
             } else {
                 resultEmbed.addFields({
                     name: tCmd(interaction, 'commands.checkurl.final_url'),
-                    value: data.resUrl || url,
+                    value: `\`${data.resUrl || url}\``,
                     inline: false
                 });
             }
