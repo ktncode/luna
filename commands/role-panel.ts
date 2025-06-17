@@ -381,6 +381,19 @@ async function handleDeletePanel(interaction: ChatInputCommandInteraction, guild
     const hasAdministratorPermission = !!(member && typeof member.permissions !== 'string' && 
         member.permissions.has(PermissionFlagsBits.Administrator));
 
+    // メッセージを先に削除
+    try {
+        const channel = await interaction.client.channels.fetch(panel.channel_id);
+        if (channel && channel.isTextBased()) {
+            const message = await channel.messages.fetch(panel.message_id);
+            await message.delete();
+            logger.info(`Deleted role panel message for panel: ${panel.title}`);
+        }
+    } catch (error) {
+        logger.warn(`Failed to delete role panel message: ${error}`);
+        // メッセージ削除が失敗してもパネル削除は続行
+    }
+
     const success = await deleteRolePanel(panel.id, guildId, interaction.user.id, hasAdministratorPermission);
 
     if (success) {
