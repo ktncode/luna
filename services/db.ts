@@ -42,7 +42,16 @@ export async function runMigrations(): Promise<void> {
       const migration = readFileSync(migrationPath, 'utf8');
       
       logger.info(`Running migration: ${file}`);
-      db.exec(migration);
+      try {
+        db.exec(migration);
+      } catch (error: any) {
+        // カラムの重複エラーは無視（既に存在する場合）
+        if (error.code === 'SQLITE_ERROR' && error.message.includes('duplicate column name')) {
+          logger.warn(`Migration ${file} skipped: column already exists`);
+          continue;
+        }
+        throw error;
+      }
     }
   } catch (error) {
     logger.error('Migration error:', error);
