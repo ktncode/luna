@@ -140,9 +140,6 @@ export default {
         try {
             logger.info(`Checking URL safety: ${url}`);
             const data = await checkURL(url);
-            
-            // デバッグ用：レスポンスデータをログ出力
-            logger.info('SecURL response data:', JSON.stringify(data, null, 2));
 
             // 結果の解析
             const hasViruses = data.viruses && data.viruses.length > 0;
