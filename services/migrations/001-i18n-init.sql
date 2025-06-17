@@ -1,5 +1,8 @@
--- Initialize i18n localization tables
+-- SPDX-License-Identifier: MPL-2.0
 -- This Source Code Form is subject to the terms of the Mozilla Public License v2.0
+-- Copyright (c) Kotone <git@ktn.works>
+
+-- Initialize i18n localization tables
 
 -- Guild専用のi18n設定テーブル
 CREATE TABLE IF NOT EXISTS guild_i18n (
