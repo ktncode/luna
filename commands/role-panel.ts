@@ -28,9 +28,6 @@ import {
 import { logger } from '../services/logger.js';
 import { setupRolePanelHandlers, updateRolePanelMessage } from '../services/role-panel.js';
 
-// コマンドロード時に役職パネルハンドラーを初期化
-let handlersSetup = false;
-
 export default {
     data: new SlashCommandBuilder()
         .setName('role-panel')
@@ -153,12 +150,9 @@ export default {
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
 
     async execute(interaction: ChatInputCommandInteraction) {
-        // 初回実行時にハンドラーを設定
-        if (!handlersSetup && interaction.client) {
-            setupRolePanelHandlers(interaction.client);
-            handlersSetup = true;
-            logger.info('Role panel handlers initialized');
-        }
+        // 毎回ハンドラーを設定（重複登録は問題なし）
+        setupRolePanelHandlers(interaction.client);
+        logger.info('Role panel handlers initialized');
 
         if (!interaction.guild) {
             await interaction.reply({
