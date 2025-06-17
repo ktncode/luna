@@ -9,17 +9,18 @@ import dotenv from 'dotenv';
 import { loadCommands } from './services/command.js';
 import { initializeDatabase } from './services/db.js';
 import { createWebhookServer } from './services/webhook.js';
+import { logger } from './services/logger.js';
 
 dotenv.config();
 
 // Debug: Check if token is loaded
 if (!process.env.DISCORD_TOKEN) {
-  console.error('DISCORD_TOKEN is not set in environment variables');
+  logger.error('DISCORD_TOKEN is not set in environment variables');
   process.exit(1);
 }
 
-console.log('Token loaded:', process.env.DISCORD_TOKEN ? 'Yes' : 'No');
-console.log('Token length:', process.env.DISCORD_TOKEN?.length || 0);
+logger.debug('Token loaded:', process.env.DISCORD_TOKEN ? 'Yes' : 'No');
+logger.debug('Token length:', process.env.DISCORD_TOKEN?.length || 0);
 
 const client = new Client({
   intents: [
@@ -31,33 +32,33 @@ const client = new Client({
 
 async function main() {
   try {
-    console.log('Luna Bot starting...');
+    logger.info('Luna Bot starting...');
     
     // Initialize database (optional, won't fail if not available)
     try {
       await initializeDatabase();
-      console.log('Database initialized');
+      logger.info('Database initialized');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.warn('Database initialization failed, continuing without database:', errorMessage);
+      logger.warn('Database initialization failed, continuing without database:', errorMessage);
     }
     
     // Load commands
     await loadCommands(client);
-    console.log('Commands loaded');
+    logger.info('Commands loaded');
     
     // Login to Discord
     await client.login(process.env.DISCORD_TOKEN);
-    console.log('Luna Bot is online!');
+    logger.info('Luna Bot is online!');
   } catch (error) {
-    console.error('Failed to start Luna Bot:', error);
+    logger.error('Failed to start Luna Bot:', error);
     process.exit(1);
   }
 }
 
 // Bot initialization
 client.once('ready', async () => {
-  console.log(`Logged in as ${client.user?.tag}!`);
+  logger.info(`Logged in as ${client.user?.tag}!`);
   
   // WebHookサーバーを初期化して起動
   const webhookServer = createWebhookServer(client);
@@ -65,7 +66,7 @@ client.once('ready', async () => {
   
   // プロセス終了時のクリーンアップ
   process.on('SIGINT', () => {
-      console.log('Shutting down...');
+      logger.info('Shutting down...');
       webhookServer.stop();
       client.destroy();
       process.exit(0);

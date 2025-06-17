@@ -8,6 +8,7 @@
 import Database from 'better-sqlite3';
 import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
+import { logger } from './logger.js';
 
 let db: Database.Database;
 
@@ -25,7 +26,7 @@ export async function initializeDatabase(): Promise<void> {
   // Enable WAL mode for better concurrency
   db.pragma('journal_mode = WAL');
   
-  console.log(`Database initialized at: ${dbPath}`);
+  logger.info(`Database initialized at: ${dbPath}`);
 }
 
 export async function runMigrations(): Promise<void> {
@@ -40,11 +41,11 @@ export async function runMigrations(): Promise<void> {
       const migrationPath = join(migrationsDir, file);
       const migration = readFileSync(migrationPath, 'utf8');
       
-      console.log(`Running migration: ${file}`);
+      logger.info(`Running migration: ${file}`);
       db.exec(migration);
     }
   } catch (error) {
-    console.error('Migration error:', error);
+    logger.error('Migration error:', error);
     throw error;
   }
 }
@@ -85,7 +86,7 @@ export class DBManager {
       const stmt = this.getStatement(cacheKey, sql);
       return stmt.all(...Object.values(where)) as T[];
     } catch (error) {
-      console.error('SelectFast error:', error);
+      logger.error('SelectFast error:', error);
       return [];
     }
   }
@@ -114,7 +115,7 @@ export class DBManager {
       stmt.run(...Object.values(data));
       return true;
     } catch (error) {
-      console.error('UpsertFast error:', error);
+      logger.error('UpsertFast error:', error);
       return false;
     }
   }
@@ -133,7 +134,7 @@ export class DBManager {
       const result = stmt.get(...Object.values(where)) as T;
       return result || null;
     } catch (error) {
-      console.error('FindOneFast error:', error);
+      logger.error('FindOneFast error:', error);
       return null;
     }
   }
@@ -172,7 +173,7 @@ export class DBManager {
       const stmt = db.prepare(query);
       return stmt.all(...params) as T[];
     } catch (error) {
-      console.error('Select error:', error);
+      logger.error('Select error:', error);
       return [];
     }
   }
@@ -190,7 +191,7 @@ export class DBManager {
       stmt.run(...Object.values(data));
       return true;
     } catch (error) {
-      console.error('Insert error:', error);
+      logger.error('Insert error:', error);
       return false;
     }
   }
@@ -209,7 +210,7 @@ export class DBManager {
       stmt.run(...params);
       return true;
     } catch (error) {
-      console.error('Update error:', error);
+      logger.error('Update error:', error);
       return false;
     }
   }
@@ -236,7 +237,7 @@ export class DBManager {
       stmt.run(...Object.values(data));
       return true;
     } catch (error) {
-      console.error('Upsert error:', error);
+      logger.error('Upsert error:', error);
       return false;
     }
   }
@@ -253,7 +254,7 @@ export class DBManager {
       stmt.run(...Object.values(where));
       return true;
     } catch (error) {
-      console.error('Delete error:', error);
+      logger.error('Delete error:', error);
       return false;
     }
   }
@@ -266,7 +267,7 @@ export class DBManager {
       const stmt = db.prepare(sql);
       return stmt.all(...params) as T[];
     } catch (error) {
-      console.error('Query error:', error);
+      logger.error('Query error:', error);
       return [];
     }
   }
@@ -295,7 +296,7 @@ export class DBManager {
       const result = stmt.get(...params) as { count: number };
       return result.count;
     } catch (error) {
-      console.error('Count error:', error);
+      logger.error('Count error:', error);
       return 0;
     }
   }
@@ -339,7 +340,7 @@ export class I18nManager {
   static setGuildLocale(guildId: string, locale: string | null): boolean {
     // locale値の検証
     if (locale !== null && !['ja-JP', 'en-US'].includes(locale)) {
-      console.error(`Invalid locale: ${locale}. Only 'ja-JP' and 'en-US' are supported.`);
+      logger.error(`Invalid locale: ${locale}. Only 'ja-JP' and 'en-US' are supported.`);
       return false;
     }
 
@@ -421,7 +422,7 @@ export class I18nManager {
       transaction();
       this.logQueue = [];
     } catch (error) {
-      console.error('Error flushing log queue:', error);
+      logger.error('Error flushing log queue:', error);
     }
   }
 
@@ -514,7 +515,7 @@ export async function createWebhook(guildId: string, webhookPath: string, channe
         );
         
         if (existingPathResult.length > 0) {
-            console.log(`Webhook path collision detected: ${webhookPath}`);
+            logger.info(`Webhook path collision detected: ${webhookPath}`);
             return false; // パスが重複している
         }
         
@@ -525,7 +526,7 @@ export async function createWebhook(guildId: string, webhookPath: string, channe
         );
         
         if (countResult[0]?.count >= 5) {
-            console.log(`Webhook limit reached for guild: ${guildId}`);
+            logger.info(`Webhook limit reached for guild: ${guildId}`);
             return false; // 上限に達している
         }
 
@@ -537,7 +538,7 @@ export async function createWebhook(guildId: string, webhookPath: string, channe
             created_by: userId
         });
     } catch (error) {
-        console.error('Error creating webhook:', error);
+        logger.error('Error creating webhook:', error);
         return false;
     }
 }
@@ -556,11 +557,11 @@ export async function deleteWebhook(guildId: string, webhookId: number, userId: 
         const webhook = result[0] as WebhookConfig;
         
         if (!webhook) {
-            console.log(`Webhook not found: ${webhookId}`);
+            logger.info(`Webhook not found: ${webhookId}`);
             return false;
         }
         
-        console.log(`Delete webhook check:`, {
+        logger.info(`Delete webhook check:`, {
             webhookId: webhookId,
             userId: userId,
             createdBy: webhook.created_by,
@@ -569,16 +570,16 @@ export async function deleteWebhook(guildId: string, webhookId: number, userId: 
         
         // 権限チェック：作成者またはAdministrator権限を持つユーザーのみ削除可能
         if (webhook.created_by !== userId && !hasAdministratorPermission) {
-            console.log(`Insufficient permissions to delete webhook: user ${userId}, creator ${webhook.created_by}`);
+            logger.info(`Insufficient permissions to delete webhook: user ${userId}, creator ${webhook.created_by}`);
             return false;
         }
         
         const stmt = db.prepare('UPDATE guild_webhooks SET enabled = 0 WHERE id = ? AND guild_id = ?');
         stmt.run(webhookId, guildId);
-        console.log(`Webhook ${webhookId} deleted successfully by user ${userId}`);
+        logger.info(`Webhook ${webhookId} deleted successfully by user ${userId}`);
         return true;
     } catch (error) {
-        console.error('Error deleting webhook:', error);
+        logger.error('Error deleting webhook:', error);
         return false;
     }
 }
@@ -598,13 +599,13 @@ export async function createCrossServerWebhook(
         // WebHookパスが存在するかチェック
         const existingWebhook = await getWebhookByPath(webhookPath);
         if (!existingWebhook) {
-            console.log(`Webhook path not found: ${webhookPath}`);
+            logger.info(`Webhook path not found: ${webhookPath}`);
             return false;
         }
         
         // WebHook名が一致するかチェック
         if (existingWebhook.name !== webhookName) {
-            console.log(`Webhook name mismatch: expected ${webhookName}, got ${existingWebhook.name}`);
+            logger.info(`Webhook name mismatch: expected ${webhookName}, got ${existingWebhook.name}`);
             return false;
         }
         
@@ -615,7 +616,7 @@ export async function createCrossServerWebhook(
         );
         
         if (existingResult.length > 0) {
-            console.log(`Cross-server webhook already exists`);
+            logger.info(`Cross-server webhook already exists`);
             return false;
         }
 
@@ -628,7 +629,7 @@ export async function createCrossServerWebhook(
             created_by: userId
         });
     } catch (error) {
-        console.error('Error creating cross-server webhook:', error);
+        logger.error('Error creating cross-server webhook:', error);
         return false;
     }
 }
@@ -647,12 +648,12 @@ export async function deleteCrossServerWebhook(guildId: string, crossWebhookId: 
         const crossWebhook = result[0] as CrossServerWebhookConfig;
         
         if (!crossWebhook) {
-            console.log(`Cross-server webhook not found: ${crossWebhookId}`);
+            logger.info(`Cross-server webhook not found: ${crossWebhookId}`);
             return false;
         }
         
         // デバッグログ
-        console.log(`Delete cross-server webhook check:`, {
+        logger.info(`Delete cross-server webhook check:`, {
             webhookId: crossWebhookId,
             userId: userId,
             createdBy: crossWebhook.created_by,
@@ -664,22 +665,22 @@ export async function deleteCrossServerWebhook(guildId: string, crossWebhookId: 
         
         // ギルドに関連するかチェック
         if (crossWebhook.source_guild_id !== guildId && crossWebhook.target_guild_id !== guildId) {
-            console.log(`Cross-server webhook not related to guild: ${guildId}`);
+            logger.info(`Cross-server webhook not related to guild: ${guildId}`);
             return false;
         }
         
         // 権限チェック：作成者またはAdministrator権限を持つユーザーのみ削除可能
         if (crossWebhook.created_by !== userId && !hasAdministratorPermission) {
-            console.log(`Insufficient permissions to delete cross-server webhook: user ${userId}, creator ${crossWebhook.created_by}, hasAdministrator: ${hasAdministratorPermission}`);
+            logger.info(`Insufficient permissions to delete cross-server webhook: user ${userId}, creator ${crossWebhook.created_by}, hasAdministrator: ${hasAdministratorPermission}`);
             return false;
         }
         
         const stmt = db.prepare('UPDATE cross_server_webhooks SET enabled = 0 WHERE id = ?');
         stmt.run(crossWebhookId);
-        console.log(`Cross-server webhook ${crossWebhookId} deleted successfully by user ${userId}`);
+        logger.info(`Cross-server webhook ${crossWebhookId} deleted successfully by user ${userId}`);
         return true;
     } catch (error) {
-        console.error('Error deleting cross-server webhook:', error);
+        logger.error('Error deleting cross-server webhook:', error);
         return false;
     }
 }
@@ -693,7 +694,7 @@ export async function getCrossServerTargets(webhookPath: string): Promise<CrossS
             [webhookPath]
         );
     } catch (error) {
-        console.error('Error getting cross-server targets:', error);
+        logger.error('Error getting cross-server targets:', error);
         return [];
     }
 }
@@ -723,7 +724,7 @@ export async function updateWebhookStats(webhookPath: string, guildId: string): 
             });
         }
     } catch (error) {
-        console.error('Error updating webhook stats:', error);
+        logger.error('Error updating webhook stats:', error);
     }
 }
 
@@ -738,7 +739,7 @@ export async function getWebhookByPath(webhookPath: string): Promise<WebhookConf
         );
         return result[0] || null;
     } catch (error) {
-        console.error('Error getting webhook by path:', error);
+        logger.error('Error getting webhook by path:', error);
         return null;
     }
 }
@@ -752,7 +753,7 @@ export async function getGuildWebhooks(guildId: string): Promise<WebhookConfig[]
             [guildId]
         );
     } catch (error) {
-        console.error('Error getting guild webhooks:', error);
+        logger.error('Error getting guild webhooks:', error);
         return [];
     }
 }
@@ -766,7 +767,7 @@ export async function getCrossServerWebhooks(guildId: string): Promise<CrossServ
             [guildId, guildId]
         );
     } catch (error) {
-        console.error('Error getting cross-server webhooks:', error);
+        logger.error('Error getting cross-server webhooks:', error);
         return [];
     }
 }

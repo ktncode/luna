@@ -8,6 +8,7 @@ import { Client, Collection, SlashCommandBuilder, REST, Routes } from 'discord.j
 import { readdirSync } from 'fs';
 import { join } from 'path';
 import { t } from './i18n.js';
+import { logger } from './logger.js';
 
 export interface Command {
   data: SlashCommandBuilder;
@@ -37,9 +38,9 @@ export async function loadCommands(client: Client): Promise<void> {
       if ('data' in command.default && 'execute' in command.default) {
         client.commands.set(command.default.data.name, command.default);
         commands.push(command.default.data.toJSON());
-        console.log(`Loaded command: ${command.default.data.name}`);
+        logger.info(`Loaded command: ${command.default.data.name}`);
       } else {
-        console.warn(`Command at ${filePath} is missing required "data" or "execute" property`);
+        logger.warn(`Command at ${filePath} is missing required "data" or "execute" property`);
       }
     }
     
@@ -47,14 +48,14 @@ export async function loadCommands(client: Client): Promise<void> {
     if (process.env.DISCORD_TOKEN && process.env.CLIENT_ID) {
       const rest = new REST().setToken(process.env.DISCORD_TOKEN);
       
-      console.log(`Started refreshing ${commands.length} application (/) commands globally.`);
+      logger.info(`Started refreshing ${commands.length} application (/) commands globally.`);
       
       const data = await rest.put(
         Routes.applicationCommands(process.env.CLIENT_ID),
         { body: commands },
       ) as any[];
       
-      console.log(`Successfully reloaded ${data.length} application (/) commands globally.`);
+      logger.info(`Successfully reloaded ${data.length} application (/) commands globally.`);
     }
     
     // Set up interaction handler
@@ -64,14 +65,14 @@ export async function loadCommands(client: Client): Promise<void> {
       const command = client.commands.get(interaction.commandName);
       
       if (!command) {
-        console.error(`No command matching ${interaction.commandName} was found.`);
+        logger.error(`No command matching ${interaction.commandName} was found.`);
         return;
       }
       
       try {
         await command.execute(interaction);
       } catch (error) {
-        console.error('Error executing command:', error);
+        logger.error('Error executing command:', error);
         
         const guildId = interaction.guild?.id;
         const locale = interaction.guild?.preferredLocale;
@@ -88,7 +89,7 @@ export async function loadCommands(client: Client): Promise<void> {
       }
     });
   } catch (error) {
-    console.error('Error loading commands:', error);
+    logger.error('Error loading commands:', error);
     throw error;
   }
 }

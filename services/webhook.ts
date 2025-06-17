@@ -6,6 +6,7 @@ import * as http from 'http';
 import * as url from 'url';
 import { getWebhookByPath, updateWebhookStats, getCrossServerTargets } from './db.js';
 import { Client } from 'discord.js';
+import { logger } from './logger.js';
 
 const WEBHOOK_PORT = process.env.WEBHOOK_PORT || 3000;
 
@@ -106,7 +107,7 @@ export class WebhookServer {
             }
 
         } catch (error) {
-            console.error('Webhook error:', error);
+            logger.error('Webhook error:', error);
             res.writeHead(500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Internal server error' }));
         }
@@ -116,7 +117,7 @@ export class WebhookServer {
         try {
             const channel = await this.client.channels.fetch(channelId);
             if (!channel || !channel.isTextBased()) {
-                console.error('Channel not found or not text-based:', channelId);
+                logger.error('Channel not found or not text-based:', channelId);
                 return false;
             }
 
@@ -140,12 +141,12 @@ export class WebhookServer {
                 await channel.send(messageOptions);
                 return true;
             } else {
-                console.error('Channel does not support sending messages:', channelId);
+                logger.error('Channel does not support sending messages:', channelId);
                 return false;
             }
 
         } catch (error) {
-            console.error('Error sending to channel:', error);
+            logger.error('Error sending to channel:', error);
             return false;
         }
     }
@@ -203,7 +204,7 @@ export class WebhookServer {
 
     public start(): void {
         this.server.listen(WEBHOOK_PORT, () => {
-            console.log(`Webhook server running on port ${WEBHOOK_PORT}`);
+            logger.info(`Webhook server running on port ${WEBHOOK_PORT}`);
         });
     }
 
