@@ -42,21 +42,21 @@ export default {
                     { name: 'Thai (ไทย)', value: 'th' },
                     { name: 'Vietnamese (Tiếng Việt)', value: 'vi' },
                     { name: 'Indonesian (Bahasa Indonesia)', value: 'id' },
-                    { name: 'Malay (Bahasa Melayu)', value: 'ms' },
                     { name: 'Dutch (Nederlands)', value: 'nl' },
                     { name: 'Polish (Polski)', value: 'pl' },
                     { name: 'Turkish (Türkçe)', value: 'tr' },
                     { name: 'Swedish (Svenska)', value: 'sv' },
-                    { name: 'Danish (Dansk)', value: 'da' },
-                    { name: 'Norwegian (Norsk)', value: 'no' },
                     { name: 'Finnish (Suomi)', value: 'fi' },
-                    { name: 'Greek (Ελληνικά)', value: 'el' }
+                    { name: 'Norwegian (Norsk)', value: 'no' },
+                    { name: 'Danish (Dansk)', value: 'da' },
+                    { name: 'Greek (Ελληνικά)', value: 'el' },
+                    { name: 'Ukrainian (Українська)', value: 'uk' }
                 )
         )
         .addStringOption(option =>
             option.setName('to_custom')
-                .setDescription('Custom target language code (e.g., "uk" for Ukrainian)')
-                .setDescriptionLocalization('ja', 'カスタム翻訳先言語コード (例: "uk" でウクライナ語)')
+                .setDescription('Custom target language code (e.g., "cs" for Czech)')
+                .setDescriptionLocalization('ja', 'カスタム翻訳先言語コード (例: "cs" でチェコ語)')
                 .setRequired(false)
         )
         .addStringOption(option =>
@@ -82,21 +82,20 @@ export default {
                     { name: 'Thai (ไทย)', value: 'th' },
                     { name: 'Vietnamese (Tiếng Việt)', value: 'vi' },
                     { name: 'Indonesian (Bahasa Indonesia)', value: 'id' },
-                    { name: 'Malay (Bahasa Melayu)', value: 'ms' },
                     { name: 'Dutch (Nederlands)', value: 'nl' },
                     { name: 'Polish (Polski)', value: 'pl' },
                     { name: 'Turkish (Türkçe)', value: 'tr' },
                     { name: 'Swedish (Svenska)', value: 'sv' },
-                    { name: 'Danish (Dansk)', value: 'da' },
-                    { name: 'Norwegian (Norsk)', value: 'no' },
                     { name: 'Finnish (Suomi)', value: 'fi' },
+                    { name: 'Norwegian (Norsk)', value: 'no' },
+                    { name: 'Danish (Dansk)', value: 'da' },
                     { name: 'Greek (Ελληνικά)', value: 'el' }
                 )
         )
         .addStringOption(option =>
             option.setName('from_custom')
-                .setDescription('Custom source language code (e.g., "uk" for Ukrainian)')
-                .setDescriptionLocalization('ja', 'カスタム翻訳元言語コード (例: "uk" でウクライナ語)')
+                .setDescription('Custom source language code (e.g., "cs" for Czech)')
+                .setDescriptionLocalization('ja', 'カスタム翻訳元言語コード (例: "cs" でチェコ語)')
                 .setRequired(false)
         ),
 
@@ -255,4 +254,5 @@ function getLanguageName(code: string): string {
     };
     
     return languageNames[code] || code.toUpperCase();
+}
 }
