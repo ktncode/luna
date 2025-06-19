@@ -213,4 +213,4 @@ commands:
 
 errors:
   command_error: "このコマンドの実行中にエラーが発生しました！"
-  unknown_command: "コマンド {command} が見つかりません。""
+  unknown_command: "コマンド {command} が見つかりません。"
