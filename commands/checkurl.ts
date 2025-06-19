@@ -11,7 +11,7 @@ import { tCmd } from '../services/i18n.js';
 interface NortonSafeWebResponse {
     id: number;
     url: string;
-    rating: 'r' | 'w' | 'u' | 'b';
+    rating: 'r' | 'w' | 'u' | 'b' | 'g';
     categories: number[];
     communityRating: number;
     reviewCount: number;
@@ -41,6 +41,7 @@ function createSafetyEmbed(data: NortonSafeWebResponse, domain: string, interact
     
     const ratingMap: Record<string, RatingInfo> = {
         'r': { color: 0x00ff00, key: 'commands.checkurl.status.safe', icon: '✅' },
+        'g': { color: 0x00ff00, key: 'commands.checkurl.status.safe', icon: '✅' },
         'w': { color: 0xffff00, key: 'commands.checkurl.status.warn', icon: '⚠️' },
         'u': { color: 0x808080, key: 'commands.checkurl.status.untested', icon: '❓' },
         'b': { color: 0xff0000, key: 'commands.checkurl.status.dangerous', icon: '🚨' }
@@ -99,7 +100,7 @@ function createSafetyEmbed(data: NortonSafeWebResponse, domain: string, interact
             value: tCmd(interaction, 'commands.checkurl.warning_text'),
             inline: false
         });
-    } else if (rating === 'r') {
+    } else if (rating === 'r' || rating === 'g') {
         embed.addFields({
             name: `✅ ${tCmd(interaction, 'commands.checkurl.safe_info')}`,
             value: tCmd(interaction, 'commands.checkurl.safe_text'),
