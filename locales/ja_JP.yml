@@ -201,6 +201,16 @@ commands:
       dangerous: "危険 🚨"
       unknown: "不明 ❓"
 
+  translate:
+    title: "翻訳結果"
+    original: "元のテキスト"
+    translated: "翻訳されたテキスト"
+    detected: "検出された言語"
+    powered_by: "Powered by Google Translate"
+    error_title: "翻訳エラー"
+    text_too_long: "テキストが長すぎます (最大1000文字)"
+    api_error: "翻訳APIとの通信でエラーが発生しました。言語コードが正しいか確認してください。"
+
 errors:
   command_error: "このコマンドの実行中にエラーが発生しました！"
-  unknown_command: "コマンド {command} が見つかりません。"
+  unknown_command: "コマンド {command} が見つかりません。""

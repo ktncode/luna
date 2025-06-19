@@ -125,7 +125,7 @@ commands:
         success: "Created webhook \"{name}\".\nURL: {url}\nChannel: {channel}"
         failed: Failed to create webhook. (Maximum 5 webhooks per server)
       list:
-        empty: No webhooks configured.
+        empty: "No webhooks configured."
         title: "**Configured Webhooks**"
         item: "Name: {name}\nURL: {url}\nChannel: {channel}\nCreated: {created}"
       delete:
@@ -139,7 +139,7 @@ commands:
         invalid_url: Please provide a valid Luna Bot webhook URL.
         success: "Added cross-server webhook \"{name}\".\nChannel: {channel}"
         failed: Failed to add cross-server webhook.
-        empty: No cross-server webhooks configured.
+        empty: "No cross-server webhooks configured."
         title: "**Cross-Server Webhooks**"
         item: "Name: {name} | Direction: {direction}\nChannel: {channel} | Created: {created}"
         outgoing: "Outgoing"
@@ -200,6 +200,16 @@ commands:
       untested: "Untested ❓"
       dangerous: "Dangerous 🚨"
       unknown: "Unknown ❓"
+
+  translate:
+    title: "Translation Result"
+    original: "Original Text"
+    translated: "Translated Text"
+    detected: "Detected Language"
+    powered_by: "Powered by Google Translate"
+    error_title: "Translation Error"
+    text_too_long: "Text is too long (maximum 1000 characters)"
+    api_error: "Error occurred while communicating with translation API. Please check if the language code is correct."
 
 errors:
   command_error: "There was an error while executing this command!"
