@@ -40,45 +40,45 @@ function createSafetyEmbed(data: NortonSafeWebResponse, domain: string, interact
     const { rating, communityRating, reviewCount, globalRestriction } = data;
     
     const ratingMap: Record<string, RatingInfo> = {
-        'r': { color: 0x00ff00, key: 'checkurl.status.safe', icon: '✅' },
-        'w': { color: 0xffff00, key: 'checkurl.status.warn', icon: '⚠️' },
-        'u': { color: 0x808080, key: 'checkurl.status.untested', icon: '❓' },
-        'b': { color: 0xff0000, key: 'checkurl.status.dangerous', icon: '🚨' }
+        'r': { color: 0x00ff00, key: 'commands.checkurl.status.safe', icon: '✅' },
+        'w': { color: 0xffff00, key: 'commands.checkurl.status.warn', icon: '⚠️' },
+        'u': { color: 0x808080, key: 'commands.checkurl.status.untested', icon: '❓' },
+        'b': { color: 0xff0000, key: 'commands.checkurl.status.dangerous', icon: '🚨' }
     };
 
-    const ratingInfo = ratingMap[rating] || { color: 0x808080, key: 'checkurl.status.unknown', icon: '❓' };
+    const ratingInfo = ratingMap[rating] || { color: 0x808080, key: 'commands.checkurl.status.unknown', icon: '❓' };
 
     const embed = new EmbedBuilder()
-        .setTitle(`${ratingInfo.icon} ${tCmd(interaction, 'checkurl.title')}`)
+        .setTitle(`${ratingInfo.icon} ${tCmd(interaction, 'commands.checkurl.title')}`)
         .setColor(ratingInfo.color)
         .addFields(
             { 
-                name: tCmd(interaction, 'checkurl.domain'), 
+                name: tCmd(interaction, 'commands.checkurl.domain'), 
                 value: domain, 
                 inline: true 
             },
             { 
-                name: tCmd(interaction, 'checkurl.status_field'), 
+                name: tCmd(interaction, 'commands.checkurl.status_field'), 
                 value: tCmd(interaction, ratingInfo.key), 
                 inline: true 
             },
             { 
-                name: tCmd(interaction, 'checkurl.rating'), 
+                name: tCmd(interaction, 'commands.checkurl.rating'), 
                 value: communityRating > 0 
-                    ? `${communityRating}/5 (${reviewCount} ${tCmd(interaction, 'checkurl.reviews')})` 
-                    : tCmd(interaction, 'checkurl.no_ratings'), 
+                    ? `${communityRating}/5 (${reviewCount} ${tCmd(interaction, 'commands.checkurl.reviews')})` 
+                    : tCmd(interaction, 'commands.checkurl.no_ratings'), 
                 inline: true 
             }
         )
         .setFooter({ 
-            text: tCmd(interaction, 'checkurl.powered_by', { service: 'Norton SafeWeb' }) 
+            text: tCmd(interaction, 'commands.checkurl.powered_by', { service: 'Norton SafeWeb' }) 
         })
         .setTimestamp();
 
     if (globalRestriction) {
         embed.addFields({ 
-            name: tCmd(interaction, 'checkurl.restriction'), 
-            value: tCmd(interaction, 'checkurl.global_restriction'), 
+            name: tCmd(interaction, 'commands.checkurl.restriction'), 
+            value: tCmd(interaction, 'commands.checkurl.global_restriction'), 
             inline: false 
         });
     }
@@ -106,7 +106,7 @@ export default {
             const domain = extractDomain(url);
             if (!domain) {
                 const errorEmbed = new EmbedBuilder()
-                    .setTitle(`❌ ${tCmd(interaction, 'checkurl.invalid_url')}`)
+                    .setTitle(`❌ ${tCmd(interaction, 'commands.checkurl.invalid_url')}`)
                     .setColor(0xff0000)
                     .setTimestamp();
                 
@@ -127,7 +127,7 @@ export default {
         } catch (error) {
             console.error('Norton SafeWeb API error:', error);
             const errorEmbed = new EmbedBuilder()
-                .setTitle(`❌ ${tCmd(interaction, 'checkurl.api_error')}`)
+                .setTitle(`❌ ${tCmd(interaction, 'commands.checkurl.api_error')}`)
                 .setColor(0xff0000)
                 .setTimestamp();
             
