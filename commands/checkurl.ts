@@ -37,7 +37,7 @@ function extractDomain(url: string): string | null {
 }
 
 function createSafetyEmbed(data: NortonSafeWebResponse, domain: string, interaction: ChatInputCommandInteraction): EmbedBuilder {
-    const { rating, communityRating, reviewCount, globalRestriction } = data;
+    const { rating, communityRating, reviewCount, globalRestriction, categories } = data;
     
     const ratingMap: Record<string, RatingInfo> = {
         'r': { color: 0x00ff00, key: 'commands.checkurl.status.safe', icon: '✅' },
@@ -50,36 +50,60 @@ function createSafetyEmbed(data: NortonSafeWebResponse, domain: string, interact
 
     const embed = new EmbedBuilder()
         .setTitle(`${ratingInfo.icon} ${tCmd(interaction, 'commands.checkurl.title')}`)
+        .setDescription(`**${domain}** ${tCmd(interaction, 'commands.checkurl.description')}`)
         .setColor(ratingInfo.color)
         .addFields(
             { 
-                name: tCmd(interaction, 'commands.checkurl.domain'), 
-                value: domain, 
+                name: `🌐 ${tCmd(interaction, 'commands.checkurl.domain')}`, 
+                value: `\`${domain}\``, 
                 inline: true 
             },
             { 
-                name: tCmd(interaction, 'commands.checkurl.status_field'), 
-                value: tCmd(interaction, ratingInfo.key), 
+                name: `📊 ${tCmd(interaction, 'commands.checkurl.status_field')}`, 
+                value: `**${tCmd(interaction, ratingInfo.key)}**`, 
                 inline: true 
             },
             { 
-                name: tCmd(interaction, 'commands.checkurl.rating'), 
+                name: `⭐ ${tCmd(interaction, 'commands.checkurl.rating')}`, 
                 value: communityRating > 0 
-                    ? `${communityRating}/5 (${reviewCount} ${tCmd(interaction, 'commands.checkurl.reviews')})` 
-                    : tCmd(interaction, 'commands.checkurl.no_ratings'), 
+                    ? `${communityRating}/5.0 ⭐ (${reviewCount} ${tCmd(interaction, 'commands.checkurl.reviews')})` 
+                    : `${tCmd(interaction, 'commands.checkurl.no_ratings')} ❌`, 
                 inline: true 
             }
         )
         .setFooter({ 
-            text: tCmd(interaction, 'commands.checkurl.powered_by', { service: 'Norton SafeWeb' }) 
+            text: `${tCmd(interaction, 'commands.checkurl.powered_by')} Norton SafeWeb`
         })
         .setTimestamp();
 
     if (globalRestriction) {
-        embed.addFields({ 
-            name: tCmd(interaction, 'commands.checkurl.restriction'), 
-            value: tCmd(interaction, 'commands.checkurl.global_restriction'), 
-            inline: false 
+        embed.addFields({
+            name: `🚫 ${tCmd(interaction, 'commands.checkurl.restriction')}`,
+            value: `⚠️ ${tCmd(interaction, 'commands.checkurl.global_restriction')}`,
+            inline: false
+        });
+    }
+
+    if (categories && categories.length > 0) {
+        embed.addFields({
+            name: `📂 ${tCmd(interaction, 'commands.checkurl.categories')}`,
+            value: categories.map(cat => `\`${cat}\``).join(', '),
+            inline: false
+        });
+    }
+
+    // セキュリティレベルに応じた追加情報
+    if (rating === 'b') {
+        embed.addFields({
+            name: `⚠️ ${tCmd(interaction, 'commands.checkurl.warning')}`,
+            value: tCmd(interaction, 'commands.checkurl.warning_text'),
+            inline: false
+        });
+    } else if (rating === 'r') {
+        embed.addFields({
+            name: `✅ ${tCmd(interaction, 'commands.checkurl.safe_info')}`,
+            value: tCmd(interaction, 'commands.checkurl.safe_text'),
+            inline: false
         });
     }
 
