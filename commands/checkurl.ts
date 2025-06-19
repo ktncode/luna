@@ -25,52 +25,6 @@ interface RatingInfo {
     icon: string;
 }
 
-export const data = new SlashCommandBuilder()
-    .setName('checkurl')
-    .setDescription('Check URL safety using Norton SafeWeb')
-    .addStringOption(option =>
-        option.setName('url')
-            .setDescription('URL to check')
-            .setRequired(true)
-    );
-
-export async function execute(interaction: ChatInputCommandInteraction) {
-    const url = interaction.options.getString('url', true);
-    await interaction.deferReply();
-
-    try {
-        const domain = extractDomain(url);
-        if (!domain) {
-            const errorEmbed = new EmbedBuilder()
-                .setTitle(`❌ ${tCmd(interaction, 'checkurl.invalid_url')}`)
-                .setColor(0xff0000)
-                .setTimestamp();
-            
-            await interaction.editReply({ embeds: [errorEmbed] });
-            return;
-        }
-
-        const response = await fetch(`https://safeweb.norton.com/safeweb/sites/v1/details?url=${encodeURIComponent(domain)}&insert=0`);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-
-        const data = await response.json() as NortonSafeWebResponse;
-        const embed = createSafetyEmbed(data, domain, interaction);
-        await interaction.editReply({ embeds: [embed] });
-
-    } catch (error) {
-        console.error('Norton SafeWeb API error:', error);
-        const errorEmbed = new EmbedBuilder()
-            .setTitle(`❌ ${tCmd(interaction, 'checkurl.api_error')}`)
-            .setColor(0xff0000)
-            .setTimestamp();
-        
-        await interaction.editReply({ embeds: [errorEmbed] });
-    }
-}
-
 function extractDomain(url: string): string | null {
     try {
         if (!url.startsWith('http://') && !url.startsWith('https://')) {
@@ -131,3 +85,53 @@ function createSafetyEmbed(data: NortonSafeWebResponse, domain: string, interact
 
     return embed;
 }
+
+export default {
+    data: new SlashCommandBuilder()
+        .setName('checkurl')
+        .setDescription('Check URL safety using Norton SafeWeb')
+        .setDescriptionLocalization('ja', 'Norton SafeWebを使用してURLの安全性をチェックします')
+        .addStringOption(option =>
+            option.setName('url')
+                .setDescription('URL to check')
+                .setDescriptionLocalization('ja', 'チェックするURL')
+                .setRequired(true)
+        ),
+
+    async execute(interaction: ChatInputCommandInteraction) {
+        const url = interaction.options.getString('url', true);
+        await interaction.deferReply();
+
+        try {
+            const domain = extractDomain(url);
+            if (!domain) {
+                const errorEmbed = new EmbedBuilder()
+                    .setTitle(`❌ ${tCmd(interaction, 'checkurl.invalid_url')}`)
+                    .setColor(0xff0000)
+                    .setTimestamp();
+                
+                await interaction.editReply({ embeds: [errorEmbed] });
+                return;
+            }
+
+            const response = await fetch(`https://safeweb.norton.com/safeweb/sites/v1/details?url=${encodeURIComponent(domain)}&insert=0`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const data = await response.json() as NortonSafeWebResponse;
+            const embed = createSafetyEmbed(data, domain, interaction);
+            await interaction.editReply({ embeds: [embed] });
+
+        } catch (error) {
+            console.error('Norton SafeWeb API error:', error);
+            const errorEmbed = new EmbedBuilder()
+                .setTitle(`❌ ${tCmd(interaction, 'checkurl.api_error')}`)
+                .setColor(0xff0000)
+                .setTimestamp();
+            
+            await interaction.editReply({ embeds: [errorEmbed] });
+        }
+    },
+};
