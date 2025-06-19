@@ -255,4 +255,3 @@ function getLanguageName(code: string): string {
     
     return languageNames[code] || code.toUpperCase();
 }
-}
