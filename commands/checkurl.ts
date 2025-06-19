@@ -7,331 +7,127 @@
 
 import { ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder } from 'discord.js';
 import { tCmd } from '../services/i18n.js';
-import { logger } from '../services/logger.js';
 
-interface SecURLData {
-    status?: number;
-    imgWidth?: number;
-    imgHeight?: number;
-    reqUrl?: string;  // reqURL -> reqUrl
-    resUrl?: string;  // resURL -> resUrl
-    title?: string;
-    anchors?: Array<{
-        url: string;
-        text: string;
-        x: number;
-        y: number;
-        w: number;
-        h: number;
-    }>;
-    viruses?: string[];
-    blackList?: string[];
-    annoyUrl?: string;
-    img?: string;
-    capturedDate?: string;
+interface NortonSafeWebResponse {
+    id: number;
+    url: string;
+    rating: 'r' | 'w' | 'u' | 'b';
+    categories: number[];
+    communityRating: number;
+    reviewCount: number;
+    userRating: number;
+    globalRestriction: boolean;
 }
 
-const HEADERS = {
-    "Connection": "keep-alive",
-    "sec-ch-ua": '"Microsoft Edge";v="95", "Chromium";v="95", ";Not A Brand";v="99"',
-    "Accept": "application/json, text/javascript, */*; q=0.01",
-    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-    "X-Requested-With": "XMLHttpRequest",
-    "sec-ch-ua-mobile": "?0",
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36 Edg/95.0.1020.40",
-    "sec-ch-ua-platform": '"macOS"',
-    "Origin": "https://securl.nu",
-    "Sec-Fetch-Site": "same-origin",
-    "Sec-Fetch-Mode": "cors",
-    "Sec-Fetch-Dest": "empty",
-    "Referer": "https://securl.nu/",
-    "Accept-Language": "ja,en;q=0.9,en-GB;q=0.8,en-US;q=0.7",
-};
-
-async function checkURL(
-    url: string,
-    waitTime: number = 1,
-    browserWidth: number = 965,
-    browserHeight: number = 683
-): Promise<SecURLData> {
-    const formData = new URLSearchParams({
-        'url': url,
-        'waitTime': waitTime.toString(),
-        'browserWidth': browserWidth.toString(),
-        'browserHeight': browserHeight.toString(),
-        'from': ''
-    });
-
-    // プロキシ設定を確認
-    const proxyUrl = process.env.HTTP_PROXY || process.env.HTTPS_PROXY || process.env.http_proxy || process.env.https_proxy;
-    
-    let fetchOptions: RequestInit = {
-        method: 'POST',
-        headers: HEADERS,
-        body: formData
-    };
-
-    // プロキシが設定されている場合、undiciのProxyAgentを使用
-    if (proxyUrl) {
-        logger.info(`Using proxy: ${proxyUrl.replace(/\/\/.*:.*@/, '//***:***@')}`); // パスワードをマスク
-        
-        // undiciのProxyAgentを動的にインポート
-        try {
-            const { ProxyAgent, setGlobalDispatcher } = await import('undici');
-            const proxyAgent = new ProxyAgent(proxyUrl);
-            setGlobalDispatcher(proxyAgent);
-        } catch (error) {
-            logger.warn('Failed to set up proxy agent:', error);
-        }
-    }
-
-    const response = await fetch('https://securl.nu/jx/get_page_jx.php', fetchOptions);
-
-    if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const text = await response.text();
-    return JSON.parse(text) as SecURLData;
+interface RatingInfo {
+    color: number;
+    key: string;
+    icon: string;
 }
 
-function getCapture(data: SecURLData, full: boolean = false): string | null {
-    if (data.img) {
-        if (full) {
-            return `https://securl.nu/save_local_captured.php?key=${data.img.slice(10, -4)}`;
-        } else {
-            return `https://securl.nu${data.img}`;
-        }
-    }
-    return null;
-}
+export const data = new SlashCommandBuilder()
+    .setName('checkurl')
+    .setDescription('Check URL safety using Norton SafeWeb')
+    .addStringOption(option =>
+        option.setName('url')
+            .setDescription('URL to check')
+            .setRequired(true)
+    );
 
-function isValidURL(string: string): boolean {
+export async function execute(interaction: ChatInputCommandInteraction) {
+    const url = interaction.options.getString('url', true);
+    await interaction.deferReply();
+
     try {
-        new URL(string);
-        return true;
-    } catch {
-        return false;
-    }
-}
-
-export default {
-    data: new SlashCommandBuilder()
-        .setName('checkurl')
-        .setDescription('Check if a URL is safe')
-        .setDescriptionLocalization('ja', 'URLが安全かどうかをチェックします')
-        .addStringOption(option =>
-            option.setName('url')
-                .setDescription('URL to check')
-                .setDescriptionLocalization('ja', 'チェックするURL')
-                .setRequired(true)
-        ),
-
-    async execute(interaction: ChatInputCommandInteraction) {
-        const url = interaction.options.getString('url', true);
-
-        // URL形式の検証
-        if (!isValidURL(url)) {
+        const domain = extractDomain(url);
+        if (!domain) {
             const errorEmbed = new EmbedBuilder()
+                .setTitle(`❌ ${tCmd(interaction, 'checkurl.invalid_url')}`)
                 .setColor(0xff0000)
-                .setTitle('❌ ' + tCmd(interaction, 'commands.checkurl.invalid_url'))
-                .setDescription(tCmd(interaction, 'commands.checkurl.invalid_url_desc'))
                 .setTimestamp();
-
-            await interaction.reply({
-                embeds: [errorEmbed],
-                flags: 64
-            });
+            
+            await interaction.editReply({ embeds: [errorEmbed] });
             return;
         }
 
-        // 処理中メッセージ
-        const loadingEmbed = new EmbedBuilder()
-            .setColor(0xffff00)
-            .setTitle('🔍 ' + tCmd(interaction, 'commands.checkurl.checking'))
-            .setDescription(tCmd(interaction, 'commands.checkurl.checking_desc', { url: `\`${url}\`` }))
-            .setTimestamp();
-
-        await interaction.reply({
-            embeds: [loadingEmbed]
-        });
-
-        try {
-            logger.info(`Checking URL safety: ${url}`);
-            const data = await checkURL(url);
-
-            // 結果の解析
-            const hasViruses = data.viruses && data.viruses.length > 0;
-            const isBlacklisted = data.blackList && data.blackList.length > 0;
-            const isRedirected = data.resUrl && data.resUrl !== url;
-            
-            // エラーステータスは危険ではなく、単に取得失敗として扱う
-            const isErrorStatus = data.status === 590 || data.status === 930;
-            const isSuspiciousStatus = data.status && data.status >= 400 && !isErrorStatus;
-            const isUnsafe = hasViruses || isBlacklisted || isSuspiciousStatus;
-            // エラーステータスは危険とは判定しない
-
-            // ステータスコードの解釈を修正
-            let statusText = 'N/A';
-            if (data.status !== undefined) {
-                switch (data.status) {
-                    case 0:
-                        statusText = `${data.status} (Analysis Complete)`;
-                        break;
-                    case 200:
-                        statusText = `${data.status} (OK)`;
-                        break;
-                    case 301:
-                    case 302:
-                        statusText = `${data.status} (Redirect)`;
-                        break;
-                    case 404:
-                        statusText = `${data.status} (Not Found)`;
-                        break;
-                    case 500:
-                        statusText = `${data.status} (Server Error)`;
-                        break;
-                    case 590:
-                        statusText = `${data.status} (Security Check Failed)`;
-                        break;
-                    case 930:
-                        statusText = `${data.status} (Analysis Error)`;
-                        break;
-                    default:
-                        statusText = data.status.toString();
-                }
-            }
-
-            // 結果Embed作成 - エラーステータスは警告色にする
-            const resultEmbed = new EmbedBuilder()
-                .setColor(isUnsafe ? 0xff0000 : (isErrorStatus ? 0xffa500 : 0x00ff00))
-                .setTitle(isUnsafe ? 
-                    '⚠️ ' + tCmd(interaction, 'commands.checkurl.unsafe') : 
-                    (isErrorStatus ? 
-                        '❌ ' + tCmd(interaction, 'commands.checkurl.could_not_fetch') :
-                        '✅ ' + tCmd(interaction, 'commands.checkurl.safe')))
-                .setDescription(tCmd(interaction, 'commands.checkurl.result_desc', { url: `\`${url}\`` }))
-                .addFields(
-                    {
-                        name: tCmd(interaction, 'commands.checkurl.status'),
-                        value: statusText,
-                        inline: true
-                    },
-                    {
-                        name: tCmd(interaction, 'commands.checkurl.title'),
-                        value: data.title || 'N/A',
-                        inline: true
-                    }
-                )
-                .setFooter({ text: 'Powered By Securl' })
-                .setTimestamp();
-
-            // リダイレクトされた場合の警告
-            if (isRedirected) {
-                resultEmbed.addFields({
-                    name: '🔄 ' + tCmd(interaction, 'commands.checkurl.redirected'),
-                    value: tCmd(interaction, 'commands.checkurl.redirect_warning', { 
-                        original: `\`${url}\``, 
-                        final: `\`${data.resUrl}\``
-                    }),
-                    inline: false
-                });
-            } else {
-                resultEmbed.addFields({
-                    name: tCmd(interaction, 'commands.checkurl.final_url'),
-                    value: `\`${data.resUrl || url}\``,
-                    inline: false
-                });
-            }
-
-            // ステータス0の場合の説明を追加
-            if (data.status === 0) {
-                resultEmbed.addFields({
-                    name: 'ℹ️ ' + tCmd(interaction, 'commands.checkurl.analysis_info'),
-                    value: tCmd(interaction, 'commands.checkurl.status_0_info'),
-                    inline: false
-                });
-            }
-
-            // ステータス590の場合の説明
-            if (data.status === 590) {
-                resultEmbed.addFields({
-                    name: 'ℹ️ ' + tCmd(interaction, 'commands.checkurl.fetch_info'),
-                    value: tCmd(interaction, 'commands.checkurl.status_590_desc'),
-                    inline: false
-                });
-            }
-
-            // ステータス930の場合の説明
-            if (data.status === 930) {
-                resultEmbed.addFields({
-                    name: 'ℹ️ ' + tCmd(interaction, 'commands.checkurl.fetch_info'),
-                    value: tCmd(interaction, 'commands.checkurl.status_930_desc'),
-                    inline: false
-                });
-            }
-
-            // ウイルス検出があれば追加
-            if (hasViruses && data.viruses) {
-                resultEmbed.addFields({
-                    name: '🦠 ' + tCmd(interaction, 'commands.checkurl.viruses_detected'),
-                    value: data.viruses.join('\n') || 'Unknown',
-                    inline: false
-                });
-            }
-
-            // ブラックリストに載っていれば追加
-            if (isBlacklisted && data.blackList) {
-                resultEmbed.addFields({
-                    name: '🚫 ' + tCmd(interaction, 'commands.checkurl.blacklisted'),
-                    value: data.blackList.join('\n') || 'Unknown',
-                    inline: false
-                });
-            }
-
-            // キャプチャ画像があれば追加
-            const captureUrl = getCapture(data);
-            if (captureUrl) {
-                resultEmbed.setImage(captureUrl);
-                resultEmbed.addFields({
-                    name: tCmd(interaction, 'commands.checkurl.captured_at'),
-                    value: data.capturedDate || 'Unknown',
-                    inline: true
-                });
-            }
-
-            // アンカー情報があれば追加（デバッグ用）
-            if (data.anchors && data.anchors.length > 0) {
-                const anchorCount = data.anchors.length;
-                resultEmbed.addFields({
-                    name: '🔗 ' + tCmd(interaction, 'commands.checkurl.anchors_found'),
-                    value: tCmd(interaction, 'commands.checkurl.anchors_count', { count: anchorCount }),
-                    inline: true
-                });
-            }
-
-            await interaction.editReply({
-                embeds: [resultEmbed]
-            });
-
-        } catch (error) {
-            logger.error('URL check error:', error);
-
-            const errorEmbed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle('❌ ' + tCmd(interaction, 'commands.checkurl.error'))
-                .setDescription(tCmd(interaction, 'commands.checkurl.error_desc'))
-                .addFields({
-                    name: tCmd(interaction, 'commands.checkurl.error_details'),
-                    value: error instanceof Error ? error.message : String(error),
-                    inline: false
-                })
-                .setFooter({ text: 'Powered By Securl' })
-                .setTimestamp();
-
-            await interaction.editReply({
-                embeds: [errorEmbed]
-            });
+        const response = await fetch(`https://safeweb.norton.com/safeweb/sites/v1/details?url=${encodeURIComponent(domain)}&insert=0`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
         }
-    },
-};
+
+        const data = await response.json() as NortonSafeWebResponse;
+        const embed = createSafetyEmbed(data, domain, interaction);
+        await interaction.editReply({ embeds: [embed] });
+
+    } catch (error) {
+        console.error('Norton SafeWeb API error:', error);
+        const errorEmbed = new EmbedBuilder()
+            .setTitle(`❌ ${tCmd(interaction, 'checkurl.api_error')}`)
+            .setColor(0xff0000)
+            .setTimestamp();
+        
+        await interaction.editReply({ embeds: [errorEmbed] });
+    }
+}
+
+function extractDomain(url: string): string | null {
+    try {
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            url = 'https://' + url;
+        }
+        return new URL(url).hostname;
+    } catch {
+        return null;
+    }
+}
+
+function createSafetyEmbed(data: NortonSafeWebResponse, domain: string, interaction: ChatInputCommandInteraction): EmbedBuilder {
+    const { rating, communityRating, reviewCount, globalRestriction } = data;
+    
+    const ratingMap: Record<string, RatingInfo> = {
+        'r': { color: 0x00ff00, key: 'checkurl.status.safe', icon: '✅' },
+        'w': { color: 0xffff00, key: 'checkurl.status.warn', icon: '⚠️' },
+        'u': { color: 0x808080, key: 'checkurl.status.untested', icon: '❓' },
+        'b': { color: 0xff0000, key: 'checkurl.status.dangerous', icon: '🚨' }
+    };
+
+    const ratingInfo = ratingMap[rating] || { color: 0x808080, key: 'checkurl.status.unknown', icon: '❓' };
+
+    const embed = new EmbedBuilder()
+        .setTitle(`${ratingInfo.icon} ${tCmd(interaction, 'checkurl.title')}`)
+        .setColor(ratingInfo.color)
+        .addFields(
+            { 
+                name: tCmd(interaction, 'checkurl.domain'), 
+                value: domain, 
+                inline: true 
+            },
+            { 
+                name: tCmd(interaction, 'checkurl.status_field'), 
+                value: tCmd(interaction, ratingInfo.key), 
+                inline: true 
+            },
+            { 
+                name: tCmd(interaction, 'checkurl.rating'), 
+                value: communityRating > 0 
+                    ? `${communityRating}/5 (${reviewCount} ${tCmd(interaction, 'checkurl.reviews')})` 
+                    : tCmd(interaction, 'checkurl.no_ratings'), 
+                inline: true 
+            }
+        )
+        .setFooter({ 
+            text: tCmd(interaction, 'checkurl.powered_by', { service: 'Norton SafeWeb' }) 
+        })
+        .setTimestamp();
+
+    if (globalRestriction) {
+        embed.addFields({ 
+            name: tCmd(interaction, 'checkurl.restriction'), 
+            value: tCmd(interaction, 'checkurl.global_restriction'), 
+            inline: false 
+        });
+    }
+
+    return embed;
+}
