@@ -179,35 +179,41 @@ export default {
       // Create success embed
       const embed = new EmbedBuilder()
         .setColor(0xffaa00)
-        .setTitle(tCmd(interaction, 'commands.timeout.embed.title'))
-        .setDescription(tCmd(interaction, 'commands.timeout.embed.success', { user: targetUser.tag }))
+        .setTitle(`🔇 ${tCmd(interaction, 'commands.timeout.embed.title')}`)
+        .setDescription(`${tCmd(interaction, 'commands.timeout.embed.success')} ${targetUser.tag}`)
         .addFields(
           {
-            name: tCmd(interaction, 'commands.timeout.embed.timed_out_user'),
-            value: `${targetUser.tag} (${targetUser.id})`,
+            name: `👤 ${tCmd(interaction, 'commands.timeout.embed.timed_out_user')}`,
+            value: `**${targetUser.tag}**\n\`${targetUser.id}\`\n${targetUser}`,
             inline: true
           },
           {
-            name: tCmd(interaction, 'commands.timeout.embed.timed_out_by'),
-            value: `${interaction.user.tag}`,
+            name: `⚖️ ${tCmd(interaction, 'commands.timeout.embed.timed_out_by')}`,
+            value: `**${interaction.user.tag}**\n${interaction.user}`,
             inline: true
           },
           {
-            name: tCmd(interaction, 'commands.timeout.embed.duration'),
-            value: `${duration} ${tCmd(interaction, 'commands.timeout.embed.minutes')}`,
+            name: `⏱️ ${tCmd(interaction, 'commands.timeout.embed.duration')}`,
+            value: `**${duration}** ${tCmd(interaction, 'commands.timeout.embed.minutes')}\n${formatDuration(duration)}`,
             inline: true
           },
           {
-            name: tCmd(interaction, 'commands.timeout.embed.timeout_until'),
-            value: `<t:${Math.floor(timeoutUntil.getTime() / 1000)}:F>`,
+            name: `📅 ${tCmd(interaction, 'commands.timeout.embed.timeout_until')}`,
+            value: `<t:${Math.floor(timeoutUntil.getTime() / 1000)}:F>\n<t:${Math.floor(timeoutUntil.getTime() / 1000)}:R>`,
             inline: false
           },
           {
-            name: tCmd(interaction, 'commands.timeout.embed.reason'),
+            name: `📝 ${tCmd(interaction, 'commands.timeout.embed.reason')}`,
             value: reason,
+            inline: false
+          },
+          {
+            name: `ℹ️ ${tCmd(interaction, 'commands.timeout.embed.info')}`,
+            value: tCmd(interaction, 'commands.timeout.embed.info_text'),
             inline: false
           }
         )
+        .setThumbnail(targetUser.displayAvatarURL({ size: 128 }))
         .setTimestamp();
 
       await interaction.reply({
@@ -237,3 +243,21 @@ export default {
     }
   },
 };
+
+function formatDuration(minutes: number): string {
+  if (minutes < 60) {
+    return `${minutes}分`;
+  } else if (minutes < 1440) {
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return remainingMinutes > 0 ? `${hours}時間${remainingMinutes}分` : `${hours}時間`;
+  } else {
+    const days = Math.floor(minutes / 1440);
+    const remainingHours = Math.floor((minutes % 1440) / 60);
+    const remainingMinutes = minutes % 60;
+    let result = `${days}日`;
+    if (remainingHours > 0) result += `${remainingHours}時間`;
+    if (remainingMinutes > 0) result += `${remainingMinutes}分`;
+    return result;
+  }
+}

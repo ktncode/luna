@@ -214,13 +214,15 @@ commands:
   timeout:
     embed:
       title: "ユーザーをタイムアウトしました"
-      success: "**{{user}}** をタイムアウトしました"
+      success: "正常にタイムアウトしました:"
       timed_out_user: "タイムアウトされたユーザー"
       timed_out_by: "実行者"
       duration: "期間"
       timeout_until: "タイムアウト終了時刻"
       minutes: "分"
       reason: "理由なし"
+      info: "追加情報"
+      info_text: "タイムアウト中のユーザーはメッセージの送信、スレッドの作成、リアクションの追加ができません。"
     errors:
       no_permission: "権限がありません"
       no_permission_detail: "このコマンドを実行する権限がありません"

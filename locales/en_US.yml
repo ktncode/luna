@@ -214,13 +214,15 @@ commands:
   timeout:
     embed:
       title: "User Timed Out"
-      success: "**{{user}}** has been timed out"
+      success: "Successfully timed out:"
       timed_out_user: "Timed Out User"
       timed_out_by: "Timed Out By"
       duration: "Duration"
       timeout_until: "Timeout Until"
       minutes: "minutes"
       reason: "No reason provided"
+      info: "Additional Information"
+      info_text: "Timed out users cannot send messages, create threads, or add reactions."
     errors:
       no_permission: "No Permission"
       no_permission_detail: "You don't have permission to use this command"
